@@ -1,0 +1,195 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:LenovoLegionToolkit.Avalonia.ViewModels"
+             xmlns:conv="using:LenovoLegionToolkit.Avalonia.Converters"
+             x:Class="LenovoLegionToolkit.Avalonia.Views.BatteryView"
+             x:DataType="vm:BatteryViewModel">
+
+    <UserControl.Resources>
+        <conv:PercentageConverter x:Key="PercentageConverter"/>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="20">
+            <!-- Page Header -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="5">
+                    <TextBlock Text="🔋 Battery Management" FontSize="24" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="Monitor battery health and configure charging preferences"
+                              FontSize="14" Foreground="#808080"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Battery Status Overview -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <Grid ColumnDefinitions="*,*,*">
+                    <!-- Current Charge -->
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Center" Spacing="5">
+                        <TextBlock Text="Charge Level" FontSize="12" Foreground="#808080" HorizontalAlignment="Center"/>
+                        <TextBlock FontSize="36" FontWeight="Bold" HorizontalAlignment="Center">
+                            <TextBlock.Text>
+                                <Binding Path="BatteryInfo.ChargeLevel" Converter="{StaticResource PercentageConverter}"/>
+                            </TextBlock.Text>
+                            <TextBlock.Foreground>
+                                <Binding Path="BatteryInfo.ChargeLevel" Converter="{x:Static conv:BatteryLevelToColorConverter.Instance}"/>
+                            </TextBlock.Foreground>
+                        </TextBlock>
+                        <TextBlock Text="{Binding ChargingStatus}" FontSize="12" Foreground="#808080" HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Battery Health -->
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center" Spacing="5">
+                        <TextBlock Text="Battery Health" FontSize="12" Foreground="#808080" HorizontalAlignment="Center"/>
+                        <TextBlock FontSize="36" FontWeight="Bold" HorizontalAlignment="Center">
+                            <TextBlock.Text>
+                                <Binding Path="BatteryHealthPercentage" StringFormat="{}{0:F0}%"/>
+                            </TextBlock.Text>
+                            <TextBlock.Foreground>
+                                <Binding Path="BatteryHealthPercentage" Converter="{x:Static conv:BatteryHealthToColorConverter.Instance}"/>
+                            </TextBlock.Foreground>
+                        </TextBlock>
+                        <TextBlock Text="{Binding BatteryHealth}" FontSize="12" Foreground="#808080" HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Time Remaining -->
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Center" Spacing="5">
+                        <TextBlock Text="Time Remaining" FontSize="12" Foreground="#808080" HorizontalAlignment="Center"/>
+                        <TextBlock FontSize="36" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center">
+                            <TextBlock.Text>
+                                <Binding Path="EstimatedTimeRemaining" StringFormat="{}{0:hh\:mm}"/>
+                            </TextBlock.Text>
+                        </TextBlock>
+                        <TextBlock Text="Hours:Minutes" FontSize="12" Foreground="#808080" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Detailed Battery Information -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="Battery Details" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,10">
+                        <!-- Left Column -->
+                        <StackPanel Grid.Row="0" Grid.Column="0" Spacing="3" Margin="0,5">
+                            <TextBlock Text="Cycle Count" FontSize="12" Foreground="#808080"/>
+                            <TextBlock Text="{Binding CycleCount}" FontSize="14" Foreground="White"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Spacing="3" Margin="0,5">
+                            <TextBlock Text="Design Capacity" FontSize="12" Foreground="#808080"/>
+                            <TextBlock FontSize="14" Foreground="White">
+                                <TextBlock.Text>
+                                    <Binding Path="DesignCapacity" StringFormat="{}{0:F0} mWh"/>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0" Spacing="3" Margin="0,5">
+                            <TextBlock Text="Full Charge Capacity" FontSize="12" Foreground="#808080"/>
+                            <TextBlock FontSize="14" Foreground="White">
+                                <TextBlock.Text>
+                                    <Binding Path="FullChargeCapacity" StringFormat="{}{0:F0} mWh"/>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <!-- Right Column -->
+                        <StackPanel Grid.Row="0" Grid.Column="1" Spacing="3" Margin="0,5">
+                            <TextBlock Text="Current Capacity" FontSize="12" Foreground="#808080"/>
+                            <TextBlock FontSize="14" Foreground="White">
+                                <TextBlock.Text>
+                                    <Binding Path="CurrentCapacity" StringFormat="{}{0:F0} mWh"/>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="1" Spacing="3" Margin="0,5">
+                            <TextBlock Text="Voltage" FontSize="12" Foreground="#808080"/>
+                            <TextBlock FontSize="14" Foreground="White">
+                                <TextBlock.Text>
+                                    <Binding Path="Voltage" StringFormat="{}{0:F2} V"/>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="1" Spacing="3" Margin="0,5">
+                            <TextBlock Text="Temperature" FontSize="12" Foreground="#808080"/>
+                            <TextBlock Text="--°C" FontSize="14" Foreground="White"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Charging Settings -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="Charging Settings" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+
+                    <!-- Rapid Charge -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="5">
+                            <TextBlock Text="Rapid Charge" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                            <TextBlock Text="Enables fast charging when battery is below 70%"
+                                      FontSize="12" Foreground="#808080" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                     IsChecked="{Binding RapidChargeEnabled}"
+                                     Command="{Binding ToggleRapidChargeCommand}"/>
+                    </Grid>
+
+                    <!-- Conservation Mode -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="5">
+                            <TextBlock Text="Conservation Mode" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                            <TextBlock Text="Limits charging to preserve battery lifespan"
+                                      FontSize="12" Foreground="#808080" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                     IsChecked="{Binding ConservationModeEnabled}"
+                                     Command="{Binding ToggleConservationModeCommand}"/>
+                    </Grid>
+
+                    <!-- Charging Threshold -->
+                    <StackPanel Spacing="10" IsEnabled="{Binding ConservationModeEnabled}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Maximum Charge Level" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                            <TextBlock Grid.Column="1">
+                                <TextBlock.Text>
+                                    <Binding Path="ChargingThreshold" Converter="{StaticResource PercentageConverter}"/>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </Grid>
+                        <Slider Minimum="60"
+                               Maximum="100"
+                               TickFrequency="10"
+                               IsSnapToTickEnabled="True"
+                               Value="{Binding ChargingThreshold}"/>
+                        <TextBlock Text="Battery will stop charging when it reaches this level"
+                                  FontSize="11" Foreground="#606060" FontStyle="Italic"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Actions -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                    <Button Command="{Binding CalibrateCommand}"
+                           Padding="12,8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="🔧" FontSize="16"/>
+                            <TextBlock Text="Calibrate Battery" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding RefreshCommand}"
+                           Padding="12,8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="🔄" FontSize="16"/>
+                            <TextBlock Text="Refresh" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

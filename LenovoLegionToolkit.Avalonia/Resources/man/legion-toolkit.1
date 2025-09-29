@@ -1,0 +1,218 @@
+.TH LEGION-TOOLKIT 1 "January 2025" "Version 3.0.0" "Legion Toolkit Manual"
+.SH NAME
+legion-toolkit \- Control panel and CLI for Lenovo Legion laptops
+
+.SH SYNOPSIS
+.B legion-toolkit
+[\fIOPTIONS\fR] [\fICOMMAND\fR] [\fIARGS\fR]
+
+.SH DESCRIPTION
+.B Legion Toolkit
+is a comprehensive control panel and command-line interface for managing
+Lenovo Legion laptop features on Linux. It provides control over power modes,
+battery settings, thermal management, RGB keyboard lighting, and more.
+
+The application can run in GUI mode (default) or be controlled via
+command-line interface for scripting and automation.
+
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Display help information and exit
+.TP
+.BR \-v ", " \-\-version
+Display version information and exit
+.TP
+.BR \-\-daemon
+Run in daemon mode (background service)
+.TP
+.BR \-\-cli
+Force CLI mode (no GUI)
+.TP
+.BR \-\-debug
+Enable debug logging
+.TP
+.BR \-\-config " " \fIFILE\fR
+Use alternate configuration file
+
+.SH COMMANDS
+.SS Power Management
+.TP
+.B power status
+Display current power mode and settings
+.TP
+.B power set \fIMODE\fR
+Set power mode (quiet, balanced, performance, custom)
+.TP
+.B power get
+Get current power mode
+
+.SS Battery Management
+.TP
+.B battery status
+Display battery information and health
+.TP
+.B battery conservation \fI[on|off|toggle]\fR
+Control battery conservation mode (limits charge to 60%)
+.TP
+.B battery rapid-charge \fI[on|off|toggle]\fR
+Control rapid charging mode
+
+.SS Thermal Management
+.TP
+.B thermal status
+Display current temperatures and fan speeds
+.TP
+.B thermal fan \fI[auto|manual]\fR
+Set fan control mode
+.TP
+.B thermal fan-speed \fISPEED\fR
+Set manual fan speed (0-100%)
+
+.SS RGB Keyboard
+.TP
+.B rgb status
+Display RGB keyboard status
+.TP
+.B rgb brightness \fILEVEL\fR
+Set keyboard backlight brightness (0-100)
+.TP
+.B rgb effect \fIEFFECT\fR
+Set RGB effect (static, breathing, wave, spectrum)
+.TP
+.B rgb color \fIR\fR \fIG\fR \fIB\fR
+Set RGB color (0-255 for each channel)
+
+.SS Display
+.TP
+.B display status
+Show display configuration
+.TP
+.B display refresh-rate \fIRATE\fR
+Set display refresh rate (60, 144, 165, etc.)
+.TP
+.B display hybrid-mode \fI[on|off|toggle]\fR
+Control hybrid graphics mode
+
+.SS Automation
+.TP
+.B automation list
+List all automation rules
+.TP
+.B automation enable \fIRULE_ID\fR
+Enable an automation rule
+.TP
+.B automation disable \fIRULE_ID\fR
+Disable an automation rule
+.TP
+.B automation run \fIRULE_ID\fR
+Manually trigger an automation rule
+
+.SS System
+.TP
+.B status
+Display overall system status
+.TP
+.B daemon start
+Start the background service
+.TP
+.B daemon stop
+Stop the background service
+.TP
+.B daemon restart
+Restart the background service
+
+.SH EXAMPLES
+.TP
+Set power mode to quiet:
+.B legion-toolkit power set quiet
+
+.TP
+Enable battery conservation mode:
+.B legion-toolkit battery conservation on
+
+.TP
+Set keyboard to red color:
+.B legion-toolkit rgb color 255 0 0
+
+.TP
+Check system status:
+.B legion-toolkit status
+
+.TP
+Run in daemon mode:
+.B legion-toolkit --daemon
+
+.SH FILES
+.TP
+.I ~/.config/legion-toolkit/config.json
+User configuration file
+.TP
+.I ~/.config/legion-toolkit/profiles/
+User-defined profiles directory
+.TP
+.I ~/.local/share/legion-toolkit/
+Application data directory
+.TP
+.I /var/log/legion-toolkit.log
+Application log file (when running as daemon)
+.TP
+.I /etc/systemd/system/legion-toolkit-system.service
+System-wide systemd service file
+.TP
+.I /etc/systemd/user/legion-toolkit.service
+User systemd service file
+
+.SH ENVIRONMENT
+.TP
+.B LEGION_TOOLKIT_CONFIG
+Path to configuration file (overrides default)
+.TP
+.B LEGION_TOOLKIT_DEBUG
+Enable debug mode (set to 1)
+.TP
+.B LEGION_TOOLKIT_LOG_LEVEL
+Set log level (debug, info, warning, error)
+
+.SH EXIT STATUS
+.TP
+.B 0
+Success
+.TP
+.B 1
+General error
+.TP
+.B 2
+Invalid command or arguments
+.TP
+.B 3
+Permission denied (try with sudo)
+.TP
+.B 4
+Hardware not supported
+.TP
+.B 5
+Service not running
+
+.SH NOTES
+Some features require root privileges to access hardware controls. The application
+will prompt for elevated permissions when necessary.
+
+The Legion kernel module (legion-laptop) must be loaded for full functionality.
+The application will attempt to load it automatically if not present.
+
+.SH BUGS
+Report bugs at: https://github.com/LenovoLegion/LegionToolkit/issues
+
+.SH AUTHORS
+Legion Toolkit Community
+
+Original Windows version by BartoszCichecki
+Linux port by the Legion Toolkit contributors
+
+.SH SEE ALSO
+.BR systemctl (1),
+.BR journalctl (1)
+
+Project homepage: https://github.com/LenovoLegion/LegionToolkit
+Documentation: https://github.com/LenovoLegion/LegionToolkit/wiki

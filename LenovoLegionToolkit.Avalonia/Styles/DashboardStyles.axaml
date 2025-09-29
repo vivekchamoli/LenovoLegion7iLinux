@@ -1,0 +1,160 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Design.PreviewWith>
+        <Border Padding="20">
+            <!-- Add Controls for Previewer Here -->
+        </Border>
+    </Design.PreviewWith>
+
+    <!-- Dashboard Card Style -->
+    <Style Selector="Border.dashboard-card">
+        <Setter Property="Background" Value="#2A2A2A"/>
+        <Setter Property="BorderBrush" Value="#404040"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="20"/>
+        <Setter Property="Margin" Value="10"/>
+    </Style>
+
+    <Style Selector="Border.dashboard-card:pointerover">
+        <Setter Property="BorderBrush" Value="#007ACC"/>
+    </Style>
+
+    <!-- Card Header Style -->
+    <Style Selector="TextBlock.card-header">
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Margin" Value="0,0,0,15"/>
+    </Style>
+
+    <!-- Card Subheader Style -->
+    <Style Selector="TextBlock.card-subheader">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="#808080"/>
+        <Setter Property="Margin" Value="0,0,0,10"/>
+    </Style>
+
+    <!-- Primary Button Style -->
+    <Style Selector="Button.primary">
+        <Setter Property="Background" Value="#007ACC"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+
+    <Style Selector="Button.primary:pointerover">
+        <Setter Property="Background" Value="#0096FF"/>
+    </Style>
+
+    <Style Selector="Button.primary:pressed">
+        <Setter Property="Background" Value="#005A9E"/>
+    </Style>
+
+    <Style Selector="Button.primary:disabled">
+        <Setter Property="Background" Value="#404040"/>
+        <Setter Property="Foreground" Value="#808080"/>
+    </Style>
+
+    <!-- Secondary Button Style -->
+    <Style Selector="Button.secondary">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#007ACC"/>
+        <Setter Property="BorderBrush" Value="#007ACC"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+
+    <Style Selector="Button.secondary:pointerover">
+        <Setter Property="Background" Value="#1A007ACC"/>
+    </Style>
+
+    <!-- Toggle Switch Style -->
+    <Style Selector="ToggleSwitch">
+        <Setter Property="OnContent" Value="On"/>
+        <Setter Property="OffContent" Value="Off"/>
+    </Style>
+
+    <!-- RadioButton Style for Power Modes -->
+    <Style Selector="RadioButton.power-mode">
+        <Setter Property="Margin" Value="5"/>
+        <Setter Property="Padding" Value="10"/>
+        <Setter Property="Background" Value="#333333"/>
+        <Setter Property="BorderBrush" Value="#404040"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+
+    <Style Selector="RadioButton.power-mode:checked">
+        <Setter Property="Background" Value="#007ACC"/>
+        <Setter Property="BorderBrush" Value="#007ACC"/>
+    </Style>
+
+    <!-- Progress Bar Style -->
+    <Style Selector="ProgressBar.gauge">
+        <Setter Property="Height" Value="24"/>
+        <Setter Property="Background" Value="#333333"/>
+        <Setter Property="Foreground" Value="#007ACC"/>
+        <Setter Property="BorderBrush" Value="#404040"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+    </Style>
+
+    <!-- Temperature Coloring -->
+    <Style Selector="TextBlock.temp-normal">
+        <Setter Property="Foreground" Value="#00C853"/>
+    </Style>
+
+    <Style Selector="TextBlock.temp-warm">
+        <Setter Property="Foreground" Value="#FFB300"/>
+    </Style>
+
+    <Style Selector="TextBlock.temp-hot">
+        <Setter Property="Foreground" Value="#FF3D00"/>
+    </Style>
+
+    <!-- Battery Status Colors -->
+    <Style Selector="TextBlock.battery-high">
+        <Setter Property="Foreground" Value="#00C853"/>
+    </Style>
+
+    <Style Selector="TextBlock.battery-medium">
+        <Setter Property="Foreground" Value="#FFB300"/>
+    </Style>
+
+    <Style Selector="TextBlock.battery-low">
+        <Setter Property="Foreground" Value="#FF3D00"/>
+    </Style>
+
+    <!-- Info Panel Style -->
+    <Style Selector="Border.info-panel">
+        <Setter Property="Background" Value="#1E1E1E"/>
+        <Setter Property="BorderBrush" Value="#333333"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="10"/>
+    </Style>
+
+    <!-- Status Indicator -->
+    <Style Selector="Ellipse.status-indicator">
+        <Setter Property="Width" Value="10"/>
+        <Setter Property="Height" Value="10"/>
+        <Setter Property="Fill" Value="#808080"/>
+    </Style>
+
+    <Style Selector="Ellipse.status-indicator.online">
+        <Setter Property="Fill" Value="#00C853"/>
+    </Style>
+
+    <Style Selector="Ellipse.status-indicator.warning">
+        <Setter Property="Fill" Value="#FFB300"/>
+    </Style>
+
+    <Style Selector="Ellipse.status-indicator.error">
+        <Setter Property="Fill" Value="#FF3D00"/>
+    </Style>
+</Styles>

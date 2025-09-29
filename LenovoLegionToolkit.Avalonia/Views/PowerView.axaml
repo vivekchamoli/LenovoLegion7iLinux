@@ -1,0 +1,168 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:LenovoLegionToolkit.Avalonia.ViewModels"
+             xmlns:conv="using:LenovoLegionToolkit.Avalonia.Converters"
+             x:Class="LenovoLegionToolkit.Avalonia.Views.PowerView"
+             x:DataType="vm:PowerViewModel">
+
+    <UserControl.Resources>
+        <conv:EnumToStringConverter x:Key="EnumToStringConverter"/>
+        <conv:PercentageConverter x:Key="PercentageConverter"/>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="20">
+            <!-- Page Header -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="5">
+                    <TextBlock Text="⚡ Power Management" FontSize="24" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="Configure power modes, battery charging, and performance settings"
+                              FontSize="14" Foreground="#808080"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Power Mode Selection -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="Power Mode" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+                    <TextBlock Text="Select performance profile based on your usage"
+                              FontSize="12" Foreground="#808080" TextWrapping="Wrap"/>
+
+                    <ItemsControl ItemsSource="{Binding AvailablePowerModes}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="2" HorizontalAlignment="Stretch"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Margin="5"
+                                       Padding="15"
+                                       HorizontalAlignment="Stretch"
+                                       HorizontalContentAlignment="Center"
+                                       Command="{Binding $parent[UserControl].DataContext.SetPowerModeCommand}"
+                                       CommandParameter="{Binding}">
+                                    <Button.Styles>
+                                        <Style Selector="Button">
+                                            <Setter Property="Background" Value="#333333"/>
+                                        </Style>
+                                        <Style Selector="Button:pointerover">
+                                            <Setter Property="Background" Value="#444444"/>
+                                        </Style>
+                                        <Style Selector="Button[Tag=Active]">
+                                            <Setter Property="Background" Value="#0078D4"/>
+                                        </Style>
+                                    </Button.Styles>
+                                    <Button.Tag>
+                                        <MultiBinding Converter="{x:Static conv:MultiValueEqualityConverter.Instance}">
+                                            <Binding/>
+                                            <Binding Path="$parent[UserControl].DataContext.CurrentPowerMode"/>
+                                        </MultiBinding>
+                                    </Button.Tag>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}"
+                                                  HorizontalAlignment="Center"
+                                                  FontWeight="SemiBold"/>
+                                        <TextBlock HorizontalAlignment="Center" FontSize="11" Foreground="#808080">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0}">
+                                                    <Binding Path="."/>
+                                                    <Binding Converter="{x:Static conv:PowerModeDescriptionConverter.Instance}"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Battery Settings -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="Battery Settings" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+
+                    <!-- Battery Status -->
+                    <Grid ColumnDefinitions="Auto,*">
+                        <StackPanel Grid.Column="0" Spacing="5">
+                            <TextBlock Text="Battery Level" FontSize="14" Foreground="#808080"/>
+                            <TextBlock FontSize="28" FontWeight="Bold" Foreground="White">
+                                <TextBlock.Text>
+                                    <Binding Path="BatteryLevel" Converter="{StaticResource PercentageConverter}"/>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </StackPanel>
+                        <Border Grid.Column="1" Margin="20,0,0,0" IsVisible="{Binding IsCharging}">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <TextBlock Text="⚡" FontSize="20" Foreground="#4CAF50"/>
+                                <TextBlock Text="Charging" FontSize="14" Foreground="#4CAF50" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Separator Height="1" Background="#333333"/>
+
+                    <!-- Rapid Charge -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="5">
+                            <TextBlock Text="Rapid Charge" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                            <TextBlock Text="Fast charging when battery is low"
+                                      FontSize="12" Foreground="#808080" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                     IsChecked="{Binding RapidChargeEnabled}"
+                                     Command="{Binding ToggleRapidChargeCommand}"/>
+                    </Grid>
+
+                    <!-- Conservation Mode -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="5">
+                            <TextBlock Text="Conservation Mode" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                            <TextBlock Text="Limit charging to extend battery lifespan"
+                                      FontSize="12" Foreground="#808080" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                     IsChecked="{Binding ConservationModeEnabled}"
+                                     Command="{Binding ToggleConservationModeCommand}"/>
+                    </Grid>
+
+                    <!-- Charging Threshold -->
+                    <StackPanel Spacing="10" IsEnabled="{Binding ConservationModeEnabled}">
+                        <TextBlock Text="Charging Threshold" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Slider Grid.Column="0"
+                                   Minimum="60"
+                                   Maximum="100"
+                                   TickFrequency="10"
+                                   IsSnapToTickEnabled="True"
+                                   Value="{Binding ChargingThreshold}"/>
+                            <TextBlock Grid.Column="1"
+                                      Margin="15,0,0,0"
+                                      VerticalAlignment="Center"
+                                      Width="40">
+                                <TextBlock.Text>
+                                    <Binding Path="ChargingThreshold" Converter="{StaticResource PercentageConverter}"/>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Actions -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                    <Button Command="{Binding RefreshCommand}"
+                           Padding="12,8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="🔄" FontSize="16"/>
+                            <TextBlock Text="Refresh" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

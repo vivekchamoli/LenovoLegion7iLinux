@@ -1,0 +1,159 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:LenovoLegionToolkit.Avalonia.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="LenovoLegionToolkit.Avalonia.Views.GpuView"
+             x:DataType="vm:GpuViewModel">
+
+    <ScrollViewer>
+        <StackPanel Margin="20" Spacing="20">
+            <!-- Header -->
+            <TextBlock Text="GPU Management" FontSize="24" FontWeight="Bold"/>
+
+            <!-- Status Bar -->
+            <Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                    CornerRadius="8" Padding="15">
+                <StackPanel Orientation="Horizontal" Spacing="20">
+                    <TextBlock Text="Status:" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding StatusMessage}"/>
+                    <ProgressBar IsIndeterminate="{Binding IsLoading}"
+                               IsVisible="{Binding IsLoading}"
+                               Width="100" Height="20"/>
+                </StackPanel>
+            </Border>
+
+            <!-- GPU Cards -->
+            <ItemsControl ItemsSource="{Binding Gpus}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1" CornerRadius="8" Margin="0,5"
+                                Padding="15">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <!-- GPU Icon -->
+                                <TextBlock Grid.Column="0" Text="🎮" FontSize="32"
+                                         VerticalAlignment="Center" Margin="0,0,15,0"/>
+
+                                <!-- GPU Info -->
+                                <StackPanel Grid.Column="1" Spacing="5">
+                                    <TextBlock FontWeight="Bold" FontSize="16">
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0} ({1})">
+                                                <Binding Path="Name"/>
+                                                <Binding Path="Type"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+
+                                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto">
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Vendor:" Margin="0,0,10,0"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Vendor}"/>
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Driver:" Margin="0,0,10,0"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Driver}"/>
+
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Temperature:" Margin="0,0,10,0"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0:F1}°C">
+                                                    <Binding Path="Temperature"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Memory:" Margin="0,0,10,0"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="1">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0} MB / {1} MB">
+                                                    <Binding Path="MemoryUsed"/>
+                                                    <Binding Path="MemoryTotal"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </Grid>
+                                </StackPanel>
+
+                                <!-- Status Indicator -->
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="5">
+                                    <Border Background="{Binding IsActive, Converter={StaticResource BoolToColorConverter}}"
+                                            CornerRadius="12" Padding="8,4">
+                                        <TextBlock Text="{Binding IsActive, Converter={StaticResource BoolToStatusTextConverter}}"
+                                                 Foreground="White" FontWeight="SemiBold"/>
+                                    </Border>
+                                    <TextBlock Text="{Binding PowerState}" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Hybrid Mode Control -->
+            <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="15"
+                    IsVisible="{Binding IsHybridModeSupported}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Hybrid Mode" FontWeight="Bold" FontSize="18"/>
+
+                    <RadioButton GroupName="HybridMode" Content="Hybrid (Both GPUs)"
+                               IsChecked="{Binding CurrentHybridMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=On}"
+                               Command="{Binding SetHybridModeCommand}" CommandParameter="On"
+                               IsEnabled="{Binding !IsHybridModeChanging}"/>
+
+                    <RadioButton GroupName="HybridMode" Content="Integrated GPU Only"
+                               IsChecked="{Binding CurrentHybridMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=OnIGPUOnly}"
+                               Command="{Binding SetHybridModeCommand}" CommandParameter="OnIGPUOnly"
+                               IsEnabled="{Binding !IsHybridModeChanging}"/>
+
+                    <RadioButton GroupName="HybridMode" Content="Auto Switch"
+                               IsChecked="{Binding CurrentHybridMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=OnAuto}"
+                               Command="{Binding SetHybridModeCommand}" CommandParameter="OnAuto"
+                               IsEnabled="{Binding !IsHybridModeChanging}"/>
+
+                    <RadioButton GroupName="HybridMode" Content="Discrete GPU Only"
+                               IsChecked="{Binding CurrentHybridMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Off}"
+                               Command="{Binding SetHybridModeCommand}" CommandParameter="Off"
+                               IsEnabled="{Binding !IsHybridModeChanging}"/>
+
+                    <TextBlock Text="⚠️ Changing hybrid mode may require system restart"
+                             Foreground="Orange" FontStyle="Italic" FontSize="12"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Power Controls -->
+            <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="15"
+                    IsVisible="{Binding DiscreteGpu, Converter={StaticResource NullToVisibilityConverter}}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Power Control" FontWeight="Bold" FontSize="18"/>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button Content="Power Off Discrete GPU"
+                                Command="{Binding PowerOffDiscreteCommand}"/>
+
+                        <Button Content="Power On Discrete GPU"
+                                Command="{Binding PowerOnDiscreteCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Actions -->
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button Content="🔄 Refresh" Command="{Binding RefreshCommand}"/>
+
+                <Button Content="NVIDIA Settings"
+                        Command="{Binding OpenNvidiaSettingsCommand}"
+                        IsVisible="{Binding DiscreteGpu.Vendor, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=NVIDIA}"/>
+
+                <Button Content="AMD Settings"
+                        Command="{Binding OpenAmdSettingsCommand}"
+                        IsVisible="{Binding DiscreteGpu.Vendor, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=AMD}"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

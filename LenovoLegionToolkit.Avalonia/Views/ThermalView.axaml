@@ -1,0 +1,248 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:LenovoLegionToolkit.Avalonia.ViewModels"
+             xmlns:conv="using:LenovoLegionToolkit.Avalonia.Converters"
+             x:Class="LenovoLegionToolkit.Avalonia.Views.ThermalView"
+             x:DataType="vm:ThermalViewModel">
+
+    <UserControl.Resources>
+        <conv:TemperatureConverter x:Key="TemperatureConverter"/>
+        <conv:PercentageConverter x:Key="PercentageConverter"/>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="20">
+            <!-- Page Header -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="5">
+                    <TextBlock Text="🌡️ Thermal Monitoring" FontSize="24" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="Monitor temperatures and control fan speeds"
+                              FontSize="14" Foreground="#808080"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Temperature Overview -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="Current Temperatures" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+
+                    <Grid ColumnDefinitions="*,*,*">
+                        <!-- CPU Temperature -->
+                        <Border Grid.Column="0" Background="#333333" CornerRadius="8" Padding="15" Margin="5">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="CPU" FontSize="14" Foreground="#808080" HorizontalAlignment="Center"/>
+                                <TextBlock FontSize="32" FontWeight="Bold" HorizontalAlignment="Center">
+                                    <TextBlock.Text>
+                                        <Binding Path="CpuTemperature" Converter="{StaticResource TemperatureConverter}"/>
+                                    </TextBlock.Text>
+                                    <TextBlock.Foreground>
+                                        <Binding Path="CpuTemperature" Converter="{x:Static conv:TemperatureToColorConverter.Instance}"/>
+                                    </TextBlock.Foreground>
+                                </TextBlock>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="5">
+                                    <TextBlock Text="Max:" FontSize="11" Foreground="#606060"/>
+                                    <TextBlock FontSize="11" Foreground="#606060">
+                                        <TextBlock.Text>
+                                            <Binding Path="CpuMaxTemp" Converter="{StaticResource TemperatureConverter}"/>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- GPU Temperature -->
+                        <Border Grid.Column="1" Background="#333333" CornerRadius="8" Padding="15" Margin="5">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="GPU" FontSize="14" Foreground="#808080" HorizontalAlignment="Center"/>
+                                <TextBlock FontSize="32" FontWeight="Bold" HorizontalAlignment="Center">
+                                    <TextBlock.Text>
+                                        <Binding Path="GpuTemperature" Converter="{StaticResource TemperatureConverter}"/>
+                                    </TextBlock.Text>
+                                    <TextBlock.Foreground>
+                                        <Binding Path="GpuTemperature" Converter="{x:Static conv:TemperatureToColorConverter.Instance}"/>
+                                    </TextBlock.Foreground>
+                                </TextBlock>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="5">
+                                    <TextBlock Text="Max:" FontSize="11" Foreground="#606060"/>
+                                    <TextBlock FontSize="11" Foreground="#606060">
+                                        <TextBlock.Text>
+                                            <Binding Path="GpuMaxTemp" Converter="{StaticResource TemperatureConverter}"/>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- System Temperature -->
+                        <Border Grid.Column="2" Background="#333333" CornerRadius="8" Padding="15" Margin="5">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="System" FontSize="14" Foreground="#808080" HorizontalAlignment="Center"/>
+                                <TextBlock FontSize="32" FontWeight="Bold" HorizontalAlignment="Center">
+                                    <TextBlock.Text>
+                                        <Binding Path="SystemTemperature" Converter="{StaticResource TemperatureConverter}"/>
+                                    </TextBlock.Text>
+                                    <TextBlock.Foreground>
+                                        <Binding Path="SystemTemperature" Converter="{x:Static conv:TemperatureToColorConverter.Instance}"/>
+                                    </TextBlock.Foreground>
+                                </TextBlock>
+                                <Button Command="{Binding ResetMaxTempsCommand}"
+                                       Background="Transparent"
+                                       Padding="5,2"
+                                       FontSize="10"
+                                       HorizontalAlignment="Center">
+                                    <TextBlock Text="Reset Max" Foreground="#808080"/>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Fan Control -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="Fan Control" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+
+                    <!-- Current Fan Speeds -->
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="5">
+                            <TextBlock Text="CPU Fan" FontSize="12" Foreground="#808080"/>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock FontSize="24" FontWeight="Bold" Foreground="White">
+                                    <TextBlock.Text>
+                                        <Binding Path="CpuFanSpeed" StringFormat="{}{0} RPM"/>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                                <TextBlock FontSize="14" VerticalAlignment="Center" Foreground="#808080">
+                                    <TextBlock.Text>
+                                        <Binding Path="CpuFanSpeed" Converter="{x:Static conv:RpmToPercentConverter.Instance}" StringFormat="({0}%)"/>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Spacing="5">
+                            <TextBlock Text="GPU Fan" FontSize="12" Foreground="#808080"/>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock FontSize="24" FontWeight="Bold" Foreground="White">
+                                    <TextBlock.Text>
+                                        <Binding Path="GpuFanSpeed" StringFormat="{}{0} RPM"/>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                                <TextBlock FontSize="14" VerticalAlignment="Center" Foreground="#808080">
+                                    <TextBlock.Text>
+                                        <Binding Path="GpuFanSpeed" Converter="{x:Static conv:RpmToPercentConverter.Instance}" StringFormat="({0}%)"/>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+
+                    <Separator Height="1" Background="#333333"/>
+
+                    <!-- Thermal Mode Selection -->
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Thermal Mode" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                        <ItemsControl ItemsSource="{Binding ThermalModes}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="4" HorizontalAlignment="Stretch"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Margin="3"
+                                           Padding="10,8"
+                                           HorizontalAlignment="Stretch"
+                                           Command="{Binding $parent[UserControl].DataContext.SetThermalModeCommand}"
+                                           CommandParameter="{Binding}">
+                                        <Button.Styles>
+                                            <Style Selector="Button">
+                                                <Setter Property="Background" Value="#333333"/>
+                                            </Style>
+                                            <Style Selector="Button:pointerover">
+                                                <Setter Property="Background" Value="#444444"/>
+                                            </Style>
+                                        </Button.Styles>
+                                        <TextBlock Text="{Binding}" HorizontalAlignment="Center"/>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!-- Manual Fan Control -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="5">
+                            <TextBlock Text="Manual Fan Control" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                            <TextBlock Text="Override automatic fan curves"
+                                      FontSize="12" Foreground="#808080" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                     IsChecked="{Binding FanControlEnabled}"
+                                     Command="{Binding ToggleFanControlCommand}"/>
+                    </Grid>
+
+                    <!-- Fan Speed Slider -->
+                    <StackPanel Spacing="10" IsEnabled="{Binding FanControlEnabled}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Target Fan Speed" FontSize="14" Foreground="White"/>
+                            <TextBlock Grid.Column="1">
+                                <TextBlock.Text>
+                                    <Binding Path="TargetFanSpeed" Converter="{StaticResource PercentageConverter}"/>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </Grid>
+                        <Slider Minimum="0"
+                               Maximum="100"
+                               TickFrequency="10"
+                               IsSnapToTickEnabled="True"
+                               Value="{Binding TargetFanSpeed}"/>
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <TextBlock Grid.Column="0" Text="Silent" FontSize="11" Foreground="#606060"/>
+                            <TextBlock Grid.Column="2" Text="Maximum" FontSize="11" Foreground="#606060"/>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Temperature History Graph Placeholder -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="Temperature History (5 min)" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+
+                    <!-- Placeholder for graph -->
+                    <Border Height="200" Background="#1E1E1E" CornerRadius="4">
+                        <Grid>
+                            <TextBlock Text="📊 Temperature graph will be displayed here"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Foreground="#606060"/>
+                        </Grid>
+                    </Border>
+
+                    <Grid ColumnDefinitions="Auto,*,Auto,*,Auto">
+                        <Rectangle Grid.Column="0" Width="12" Height="12" Fill="#0078D4" Margin="0,0,5,0"/>
+                        <TextBlock Grid.Column="1" Text="CPU" FontSize="11" Foreground="#808080" Margin="0,0,15,0"/>
+                        <Rectangle Grid.Column="2" Width="12" Height="12" Fill="#00BCF2" Margin="0,0,5,0"/>
+                        <TextBlock Grid.Column="3" Text="GPU" FontSize="11" Foreground="#808080" Margin="0,0,15,0"/>
+                        <Rectangle Grid.Column="4" Width="12" Height="12" Fill="#4CAF50" Margin="0,0,5,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Actions -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                    <Button Command="{Binding RefreshCommand}"
+                           Padding="12,8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="🔄" FontSize="16"/>
+                            <TextBlock Text="Refresh" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

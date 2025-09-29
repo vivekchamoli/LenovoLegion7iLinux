@@ -1,0 +1,239 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:LenovoLegionToolkit.Avalonia.ViewModels"
+        x:Class="LenovoLegionToolkit.Avalonia.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="{Binding WindowTitle}"
+        Width="1200" Height="800"
+        MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Styles>
+        <Style Selector="Window">
+            <Setter Property="TransparencyLevelHint" Value="AcrylicBlur"/>
+            <Setter Property="Background" Value="#F0202020"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Title Bar -->
+        <Border Grid.Row="0"
+                Background="#1A1A1A"
+                Height="40"
+                IsHitTestVisible="True">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0"
+                           Orientation="Horizontal"
+                           Spacing="10"
+                           Margin="10,0">
+                    <Image Width="24" Height="24"
+                          VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding WindowTitle}"
+                              VerticalAlignment="Center"
+                              FontWeight="SemiBold"
+                              Foreground="White"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2"
+                           Orientation="Horizontal"
+                           Spacing="5"
+                           Margin="0,0,10,0">
+                    <Button Width="30" Height="30"
+                           Background="Transparent"
+                           BorderThickness="0"
+                           Command="{Binding ShowSettingsCommand}"
+                           ToolTip.Tip="Settings">
+                        <TextBlock Text="⚙️" FontSize="16"/>
+                    </Button>
+                    <Button Width="30" Height="30"
+                           Background="Transparent"
+                           BorderThickness="0"
+                           Command="{Binding RefreshCommand}"
+                           ToolTip.Tip="Refresh">
+                        <TextBlock Text="🔄" FontSize="16"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content Area -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250" MinWidth="200"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Navigation Sidebar -->
+            <Border Grid.Column="0"
+                   Background="#1E1E1E"
+                   BorderBrush="#333333"
+                   BorderThickness="0,0,1,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,10">
+                        <TextBlock Text="NAVIGATION"
+                                  Foreground="#808080"
+                                  FontSize="11"
+                                  FontWeight="SemiBold"
+                                  Margin="15,10,0,10"/>
+
+                        <ItemsControl ItemsSource="{Binding NavigationItems}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Background="Transparent"
+                                           BorderThickness="0"
+                                           HorizontalAlignment="Stretch"
+                                           HorizontalContentAlignment="Left"
+                                           Padding="15,12"
+                                           IsEnabled="{Binding IsEnabled}"
+                                           Command="{Binding $parent[Window].DataContext.NavigateCommand}"
+                                           CommandParameter="{Binding PageType}">
+                                        <Button.Styles>
+                                            <Style Selector="Button:pointerover">
+                                                <Setter Property="Background" Value="#2A2A2A"/>
+                                            </Style>
+                                            <Style Selector="Button:pressed">
+                                                <Setter Property="Background" Value="#333333"/>
+                                            </Style>
+                                            <Style Selector="Button:disabled">
+                                                <Setter Property="Opacity" Value="0.5"/>
+                                            </Style>
+                                        </Button.Styles>
+
+                                        <StackPanel Orientation="Horizontal" Spacing="12">
+                                            <TextBlock Text="{Binding Icon}"
+                                                      FontSize="20"
+                                                      VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Name}"
+                                                      FontSize="14"
+                                                      VerticalAlignment="Center"
+                                                      Foreground="White"/>
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Separator Margin="10,20" Background="#333333"/>
+
+                        <TextBlock Text="SYSTEM"
+                                  Foreground="#808080"
+                                  FontSize="11"
+                                  FontWeight="SemiBold"
+                                  Margin="15,10,0,10"/>
+
+                        <Button Background="Transparent"
+                               BorderThickness="0"
+                               HorizontalAlignment="Stretch"
+                               HorizontalContentAlignment="Left"
+                               Padding="15,12"
+                               Command="{Binding ShowAboutCommand}">
+                            <Button.Styles>
+                                <Style Selector="Button:pointerover">
+                                    <Setter Property="Background" Value="#2A2A2A"/>
+                                </Style>
+                            </Button.Styles>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <TextBlock Text="ℹ️" FontSize="20" VerticalAlignment="Center"/>
+                                <TextBlock Text="About" FontSize="14" VerticalAlignment="Center" Foreground="White"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Background="Transparent"
+                               BorderThickness="0"
+                               HorizontalAlignment="Stretch"
+                               HorizontalContentAlignment="Left"
+                               Padding="15,12"
+                               Command="{Binding ExitCommand}">
+                            <Button.Styles>
+                                <Style Selector="Button:pointerover">
+                                    <Setter Property="Background" Value="#2A2A2A"/>
+                                </Style>
+                            </Button.Styles>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <TextBlock Text="🚪" FontSize="20" VerticalAlignment="Center"/>
+                                <TextBlock Text="Exit" FontSize="14" VerticalAlignment="Center" Foreground="White"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Content Area -->
+            <Border Grid.Column="1" Background="#252525">
+                <Grid>
+                    <ContentControl Content="{Binding CurrentPage}"
+                                   Margin="20"/>
+
+                    <!-- Loading Overlay -->
+                    <Border Background="#AA000000"
+                           IsVisible="{Binding IsBusy}">
+                        <StackPanel HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Spacing="20">
+                            <ProgressBar IsIndeterminate="True"
+                                       Width="200"/>
+                            <TextBlock Text="Loading..."
+                                      HorizontalAlignment="Center"
+                                      Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2"
+               Background="#1A1A1A"
+               Height="30"
+               BorderBrush="#333333"
+               BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0"
+                           Orientation="Horizontal"
+                           VerticalAlignment="Center"
+                           Margin="10,0">
+                    <TextBlock Text="{Binding StatusText}"
+                              Foreground="#808080"
+                              FontSize="12"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                           Orientation="Horizontal"
+                           Spacing="15"
+                           Margin="10,0"
+                           VerticalAlignment="Center">
+                    <!-- Quick Status Items -->
+                    <TextBlock Text="CPU: --°C"
+                              Foreground="#808080"
+                              FontSize="11"/>
+                    <TextBlock Text="GPU: --°C"
+                              Foreground="#808080"
+                              FontSize="11"/>
+                    <TextBlock Text="Battery: --%"
+                              Foreground="#808080"
+                              FontSize="11"/>
+                    <TextBlock Text="{Binding CurrentTime}"
+                              Foreground="#808080"
+                              FontSize="11"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

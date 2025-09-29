@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="LenovoLegionToolkit.Avalonia.Controls.CircularProgressBar"
+             x:Name="ThisControl">
+
+    <Grid Width="{Binding Size, ElementName=ThisControl}"
+          Height="{Binding Size, ElementName=ThisControl}">
+
+        <!-- Background Circle -->
+        <Ellipse Stroke="#333333"
+                StrokeThickness="{Binding StrokeThickness, ElementName=ThisControl}"
+                Fill="Transparent"/>
+
+        <!-- Progress Arc -->
+        <Path Name="PART_ProgressPath"
+              Stroke="{Binding ProgressBrush, ElementName=ThisControl}"
+              StrokeThickness="{Binding StrokeThickness, ElementName=ThisControl}"
+              StrokeLineCap="Round"
+              Fill="Transparent">
+            <Path.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.3"/>
+                </Transitions>
+            </Path.Transitions>
+        </Path>
+
+        <!-- Center Content -->
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+            <StackPanel>
+                <!-- Value Text -->
+                <TextBlock Text="{Binding FormattedValue, ElementName=ThisControl}"
+                          FontSize="{Binding ValueFontSize, ElementName=ThisControl}"
+                          FontWeight="Bold"
+                          HorizontalAlignment="Center"
+                          Foreground="White"/>
+
+                <!-- Label Text -->
+                <TextBlock Text="{Binding Label, ElementName=ThisControl}"
+                          FontSize="{Binding LabelFontSize, ElementName=ThisControl}"
+                          HorizontalAlignment="Center"
+                          Foreground="#808080"
+                          IsVisible="{Binding ShowLabel, ElementName=ThisControl}"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

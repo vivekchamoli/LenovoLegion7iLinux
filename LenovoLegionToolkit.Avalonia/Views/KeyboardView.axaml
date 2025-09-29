@@ -1,0 +1,293 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:LenovoLegionToolkit.Avalonia.ViewModels"
+             xmlns:conv="using:LenovoLegionToolkit.Avalonia.Converters"
+             x:Class="LenovoLegionToolkit.Avalonia.Views.KeyboardView"
+             x:DataType="vm:KeyboardViewModel"
+             x:CompileBindings="False">
+
+    <UserControl.Resources>
+        <conv:EnumToStringConverter x:Key="EnumToStringConverter"/>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <conv:PercentageConverter x:Key="PercentageConverter"/>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="20">
+            <!-- Page Header -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="5">
+                    <TextBlock Text="⌨️ RGB Keyboard" FontSize="24" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="Customize keyboard backlight colors and effects"
+                              FontSize="14" Foreground="#808080"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Not Supported Message -->
+            <Border Background="#333333" CornerRadius="8" Padding="20"
+                   IsVisible="{Binding !IsRgbSupported}">
+                <StackPanel Spacing="10" HorizontalAlignment="Center">
+                    <TextBlock Text="❌" FontSize="48" HorizontalAlignment="Center"/>
+                    <TextBlock Text="RGB Keyboard Not Detected"
+                              FontSize="18" FontWeight="Bold"
+                              HorizontalAlignment="Center" Foreground="White"/>
+                    <TextBlock Text="Your device doesn't have an RGB keyboard or the driver is not loaded"
+                              FontSize="14" Foreground="#808080"
+                              TextAlignment="Center" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Main Controls -->
+            <StackPanel Spacing="20" IsVisible="{Binding IsRgbSupported}">
+
+                <!-- Power and Brightness -->
+                <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="20">
+                        <!-- Power Toggle -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="5">
+                                <TextBlock Text="Keyboard Backlight" FontSize="16" FontWeight="SemiBold" Foreground="White"/>
+                                <TextBlock Text="Turn keyboard lighting on or off"
+                                          FontSize="12" Foreground="#808080"/>
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="1"
+                                         IsChecked="{Binding IsEnabled}"
+                                         Command="{Binding ToggleCommand}"/>
+                        </Grid>
+
+                        <Separator Height="1" Background="#333333"/>
+
+                        <!-- Brightness Control -->
+                        <StackPanel Spacing="10" IsEnabled="{Binding IsEnabled}">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="Brightness" FontSize="14" Foreground="White"/>
+                                <TextBlock Grid.Column="1">
+                                    <TextBlock.Text>
+                                        <Binding Path="Brightness" Converter="{StaticResource PercentageConverter}"/>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                            </Grid>
+                            <Slider Minimum="0"
+                                   Maximum="100"
+                                   TickFrequency="10"
+                                   IsSnapToTickEnabled="True"
+                                   Value="{Binding Brightness}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Color Selection -->
+                <Border Background="#2A2A2A" CornerRadius="8" Padding="20" IsEnabled="{Binding IsEnabled}">
+                    <StackPanel Spacing="20">
+                        <TextBlock Text="Color Selection" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+
+                        <!-- Zone Selection (if multi-zone) -->
+                        <StackPanel Spacing="10" IsVisible="{Binding KeyboardInfo.Is4Zone}">
+                            <TextBlock Text="Zone" FontSize="14" Foreground="White"/>
+                            <ComboBox ItemsSource="{Binding AvailableZones}"
+                                     SelectedItem="{Binding SelectedZone}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- Color Picker Area -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="10">
+                                <TextBlock Text="Custom Color" FontSize="14" Foreground="White"/>
+
+                                <!-- Color Display -->
+                                <Border Width="200" Height="50" CornerRadius="4"
+                                       Background="{Binding SelectedColor, Converter={x:Static conv:ColorToBrushConverter.Instance}}">
+                                    <TextBlock Text="{Binding SelectedColor, Converter={x:Static conv:ColorToHexConverter.Instance}}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Foreground="White"
+                                              FontWeight="Bold"/>
+                                </Border>
+
+                                <!-- RGB Sliders -->
+                                <StackPanel Spacing="5">
+                                    <Grid ColumnDefinitions="30,*,40">
+                                        <TextBlock Grid.Column="0" Text="R" Foreground="#FF6B6B"/>
+                                        <Slider Grid.Column="1" Minimum="0" Maximum="255"
+                                               Value="{Binding SelectedColor.R}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding SelectedColor.R}"
+                                                  HorizontalAlignment="Right"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="30,*,40">
+                                        <TextBlock Grid.Column="0" Text="G" Foreground="#51CF66"/>
+                                        <Slider Grid.Column="1" Minimum="0" Maximum="255"
+                                               Value="{Binding SelectedColor.G}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding SelectedColor.G}"
+                                                  HorizontalAlignment="Right"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="30,*,40">
+                                        <TextBlock Grid.Column="0" Text="B" Foreground="#339AF0"/>
+                                        <Slider Grid.Column="1" Minimum="0" Maximum="255"
+                                               Value="{Binding SelectedColor.B}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding SelectedColor.B}"
+                                                  HorizontalAlignment="Right"/>
+                                    </Grid>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Button Grid.Column="1"
+                                   Command="{Binding ApplyColorCommand}"
+                                   VerticalAlignment="Center"
+                                   Padding="20,10"
+                                   Margin="20,0,0,0">
+                                <TextBlock Text="Apply Color"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Preset Colors -->
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Preset Colors" FontSize="14" Foreground="White"/>
+                            <ItemsControl ItemsSource="{Binding PresetColors}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Width="60" Height="60"
+                                               Margin="5"
+                                               Command="{Binding $parent[UserControl].DataContext.ApplyPresetCommand}"
+                                               CommandParameter="{Binding}"
+                                               ToolTip.Tip="{Binding Name}">
+                                            <Border CornerRadius="4"
+                                                   Background="{Binding Color, Converter={x:Static conv:ColorToBrushConverter.Instance}}"
+                                                   Width="50" Height="50"/>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Effects -->
+                <Border Background="#2A2A2A" CornerRadius="8" Padding="20" IsEnabled="{Binding IsEnabled}">
+                    <StackPanel Spacing="20">
+                        <TextBlock Text="Lighting Effects" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+
+                        <!-- Effect Selection -->
+                        <ItemsControl ItemsSource="{Binding AvailableEffects}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="4"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Margin="5"
+                                           Padding="15,10"
+                                           Command="{Binding $parent[UserControl].DataContext.ApplyEffectCommand}"
+                                           CommandParameter="{Binding}">
+                                        <Button.Styles>
+                                            <Style Selector="Button">
+                                                <Setter Property="Background" Value="#333333"/>
+                                            </Style>
+                                            <Style Selector="Button:pointerover">
+                                                <Setter Property="Background" Value="#444444"/>
+                                            </Style>
+                                        </Button.Styles>
+                                        <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}"
+                                                  HorizontalAlignment="Center"/>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Effect Speed -->
+                        <StackPanel Spacing="10"
+                                   IsVisible="{Binding SelectedEffect, Converter={x:Static conv:EffectHasSpeedConverter.Instance}}">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="Effect Speed" FontSize="14" Foreground="White"/>
+                                <TextBlock Grid.Column="1" Text="{Binding EffectSpeed}"/>
+                            </Grid>
+                            <Slider Minimum="1"
+                                   Maximum="10"
+                                   TickFrequency="1"
+                                   IsSnapToTickEnabled="True"
+                                   Value="{Binding EffectSpeed}"/>
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <TextBlock Grid.Column="0" Text="Slow" FontSize="11" Foreground="#606060"/>
+                                <TextBlock Grid.Column="2" Text="Fast" FontSize="11" Foreground="#606060"/>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Profiles -->
+                <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="20">
+                        <TextBlock Text="Profiles" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+
+                        <!-- Profile Name Input -->
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <TextBox Grid.Column="0"
+                                    Watermark="Enter profile name..."
+                                    Text="{Binding SelectedProfileName}"/>
+                            <Button Grid.Column="1"
+                                   Margin="10,0,5,0"
+                                   Padding="15,8"
+                                   Command="{Binding SaveProfileCommand}">
+                                <TextBlock Text="💾 Save"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Saved Profiles List -->
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Saved Profiles" FontSize="14" Foreground="White"/>
+                            <ListBox ItemsSource="{Binding SavedProfiles}"
+                                    SelectedItem="{Binding SelectedProfileName}"
+                                    MaxHeight="200">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="*,Auto,Auto">
+                                            <TextBlock Grid.Column="0"
+                                                      Text="{Binding}"
+                                                      VerticalAlignment="Center"/>
+                                            <Button Grid.Column="1"
+                                                   Margin="5,0"
+                                                   Padding="8,4"
+                                                   Command="{Binding $parent[UserControl].DataContext.LoadProfileCommand}"
+                                                   CommandParameter="{Binding}">
+                                                <TextBlock Text="Load"/>
+                                            </Button>
+                                            <Button Grid.Column="2"
+                                                   Padding="8,4"
+                                                   Command="{Binding $parent[UserControl].DataContext.DeleteProfileCommand}"
+                                                   CommandParameter="{Binding}">
+                                                <TextBlock Text="🗑️"/>
+                                            </Button>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Actions -->
+                <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                        <Button Command="{Binding RefreshCommand}"
+                               Padding="12,8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="🔄" FontSize="16"/>
+                                <TextBlock Text="Refresh" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

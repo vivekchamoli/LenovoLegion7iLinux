@@ -1,0 +1,315 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:LenovoLegionToolkit.Avalonia.ViewModels"
+             xmlns:conv="using:LenovoLegionToolkit.Avalonia.Converters"
+             x:Class="LenovoLegionToolkit.Avalonia.Views.DisplayView"
+             x:DataType="vm:DisplayViewModel"
+             x:CompileBindings="False">
+
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <conv:PercentageConverter x:Key="PercentageConverter"/>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="20">
+            <!-- Page Header -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="5">
+                    <TextBlock Text="🖥️ Display Settings" FontSize="24" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="Configure display resolution, refresh rate, HDR, and color settings"
+                              FontSize="14" Foreground="#808080"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Display Selector -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="15">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="10">
+                            <TextBlock Text="Display" FontSize="16" FontWeight="SemiBold" Foreground="White"/>
+                            <ComboBox ItemsSource="{Binding Displays}"
+                                     SelectedItem="{Binding SelectedDisplay}"
+                                     MinWidth="300">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <TextBlock Grid.Column="0" Margin="0,0,10,0">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0}">
+                                                        <Binding Path="IsInternal" Converter="{x:Static conv:DisplayTypeIconConverter.Instance}"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                <TextBlock FontSize="11" Foreground="#808080">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding StringFormat="{}{0}x{1} @ {2}Hz">
+                                                            <Binding Path="CurrentConfiguration.Width"/>
+                                                            <Binding Path="CurrentConfiguration.Height"/>
+                                                            <Binding Path="CurrentConfiguration.RefreshRate"/>
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <Button Grid.Column="1"
+                               Command="{Binding IdentifyDisplaysCommand}"
+                               Padding="12,8"
+                               VerticalAlignment="Bottom">
+                            <TextBlock Text="🔍 Identify"/>
+                        </Button>
+                    </Grid>
+
+                    <!-- Display Info -->
+                    <Border Background="#1E1E1E" CornerRadius="4" Padding="15"
+                           IsVisible="{Binding SelectedDisplay, Converter={x:Static conv:IsNotNullConverter.Instance}}">
+                        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Model:" Foreground="#808080" Margin="0,0,15,5"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedDisplay.Model}" Foreground="White" Margin="0,0,0,5"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" Foreground="#808080" Margin="0,0,15,5"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,0,0,5" Foreground="White">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0}">
+                                        <Binding Path="SelectedDisplay.IsInternal" Converter="{x:Static conv:DisplayTypeConverter.Instance}"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Connection:" Foreground="#808080" Margin="0,0,15,0"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedDisplay.Id}" Foreground="White"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- Resolution & Refresh Rate -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="Display Mode" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+
+                    <!-- Resolution -->
+                    <Grid ColumnDefinitions="150,*,Auto">
+                        <TextBlock Grid.Column="0" Text="Resolution" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1"
+                                 ItemsSource="{Binding AvailableResolutions}"
+                                 SelectedItem="{Binding SelectedResolution}"
+                                 MinWidth="200">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock>
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0}x{1}">
+                                                <Binding Path="Width"/>
+                                                <Binding Path="Height"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button Grid.Column="2"
+                               Command="{Binding ApplyResolutionCommand}"
+                               Margin="10,0,0,0"
+                               Padding="15,8">
+                            <TextBlock Text="Apply"/>
+                        </Button>
+                    </Grid>
+
+                    <!-- Refresh Rate -->
+                    <Grid ColumnDefinitions="150,*,Auto">
+                        <TextBlock Grid.Column="0" Text="Refresh Rate" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1"
+                                 ItemsSource="{Binding AvailableRefreshRates}"
+                                 SelectedItem="{Binding SelectedRefreshRate}"
+                                 MinWidth="200">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding StringFormat='{}{0} Hz'}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button Grid.Column="2"
+                               Command="{Binding ApplyRefreshRateCommand}"
+                               Margin="10,0,0,0"
+                               Padding="15,8">
+                            <TextBlock Text="Apply"/>
+                        </Button>
+                    </Grid>
+
+                    <!-- HDR Toggle -->
+                    <Grid ColumnDefinitions="150,*"
+                         IsVisible="{Binding SelectedDisplay.Capabilities.SupportsHdr}">
+                        <TextBlock Grid.Column="0" Text="HDR" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="15">
+                            <ToggleSwitch IsChecked="{Binding HdrEnabled}"
+                                        Command="{Binding ToggleHdrCommand}"/>
+                            <TextBlock Text="Enable High Dynamic Range"
+                                      FontSize="12" Foreground="#808080"
+                                      VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Brightness -->
+                    <StackPanel Spacing="10">
+                        <Grid ColumnDefinitions="150,*">
+                            <TextBlock Grid.Column="0" Text="Brightness" FontSize="14" Foreground="White"/>
+                            <TextBlock Grid.Column="1" HorizontalAlignment="Right">
+                                <TextBlock.Text>
+                                    <Binding Path="Brightness" Converter="{StaticResource PercentageConverter}"/>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </Grid>
+                        <Slider Minimum="0"
+                               Maximum="100"
+                               TickFrequency="10"
+                               IsSnapToTickEnabled="False"
+                               Value="{Binding Brightness}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Night Light -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="Night Light" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+
+                    <!-- Night Light Toggle -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="5">
+                            <TextBlock Text="Reduce blue light" FontSize="14" Foreground="White"/>
+                            <TextBlock Text="Reduces eye strain in low light environments"
+                                      FontSize="12" Foreground="#808080" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                     IsChecked="{Binding NightLightEnabled}"
+                                     Command="{Binding ToggleNightLightCommand}"/>
+                    </Grid>
+
+                    <!-- Color Temperature -->
+                    <StackPanel Spacing="10" IsEnabled="{Binding NightLightEnabled}">
+                        <Grid ColumnDefinitions="150,*">
+                            <TextBlock Grid.Column="0" Text="Color Temperature" FontSize="14" Foreground="White"/>
+                            <TextBlock Grid.Column="1" HorizontalAlignment="Right">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0}K">
+                                        <Binding Path="ColorTemperature"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </Grid>
+                        <Slider Minimum="2700"
+                               Maximum="6500"
+                               TickFrequency="500"
+                               IsSnapToTickEnabled="False"
+                               Value="{Binding ColorTemperature}"/>
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <TextBlock Grid.Column="0" Text="Warmer" FontSize="11" Foreground="#606060"/>
+                            <TextBlock Grid.Column="2" Text="Cooler" FontSize="11" Foreground="#606060"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Schedule -->
+                    <StackPanel Spacing="15" IsEnabled="{Binding NightLightEnabled}">
+                        <CheckBox IsChecked="{Binding UseNightLightSchedule}">
+                            <TextBlock Text="Schedule night light" FontSize="14"/>
+                        </CheckBox>
+
+                        <Grid ColumnDefinitions="150,*" RowDefinitions="Auto,Auto"
+                             IsEnabled="{Binding UseNightLightSchedule}">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Turn on at:" FontSize="12" Foreground="#808080" Margin="20,0,0,10"/>
+                            <TimePicker Grid.Row="0" Grid.Column="1" SelectedTime="{Binding NightLightStartTime}" Margin="0,0,0,10"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Turn off at:" FontSize="12" Foreground="#808080" Margin="20,0,0,0"/>
+                            <TimePicker Grid.Row="1" Grid.Column="1" SelectedTime="{Binding NightLightEndTime}"/>
+                        </Grid>
+
+                        <Button Command="{Binding ApplyNightLightSettingsCommand}"
+                               HorizontalAlignment="Right"
+                               Padding="15,8">
+                            <TextBlock Text="Apply Schedule"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Display Presets -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="Display Presets" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+
+                    <!-- Save New Preset -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Grid.Column="0"
+                                Watermark="Enter preset name..."
+                                Text="{Binding NewPresetName}"/>
+                        <Button Grid.Column="1"
+                               Margin="10,0,0,0"
+                               Padding="15,8"
+                               Command="{Binding SavePresetCommand}">
+                            <TextBlock Text="💾 Save Current"/>
+                        </Button>
+                    </Grid>
+
+                    <!-- Load Preset -->
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Saved Presets" FontSize="14" Foreground="White"/>
+                        <ListBox ItemsSource="{Binding DisplayPresets}"
+                                SelectedItem="{Binding SelectedPreset}"
+                                MaxHeight="150">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="*,Auto,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                  Text="{Binding}"
+                                                  VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1"
+                                               Margin="5,0"
+                                               Padding="8,4"
+                                               Command="{Binding $parent[UserControl].DataContext.LoadPresetCommand}"
+                                               CommandParameter="{Binding}">
+                                            <TextBlock Text="Load"/>
+                                        </Button>
+                                        <Button Grid.Column="2"
+                                               Padding="8,4"
+                                               Command="{Binding $parent[UserControl].DataContext.DeletePresetCommand}"
+                                               CommandParameter="{Binding}">
+                                            <TextBlock Text="🗑️"/>
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Actions -->
+            <Border Background="#2A2A2A" CornerRadius="8" Padding="20">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                    <Button Command="{Binding ResetToDefaultCommand}"
+                           Padding="12,8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="↺" FontSize="16"/>
+                            <TextBlock Text="Reset to Default" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding RefreshDisplaysCommand}"
+                           Padding="12,8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="🔄" FontSize="16"/>
+                            <TextBlock Text="Refresh" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

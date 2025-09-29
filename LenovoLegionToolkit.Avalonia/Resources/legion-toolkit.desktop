@@ -1,0 +1,34 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Legion Toolkit
+GenericName=System Control Panel
+Comment=Control panel for Lenovo Legion laptops
+Icon=legion-toolkit
+Exec=/opt/legion-toolkit/LegionToolkit
+Terminal=false
+Categories=System;Settings;HardwareSettings;
+Keywords=legion;lenovo;hardware;performance;battery;thermal;rgb;fan;power;
+StartupNotify=true
+StartupWMClass=LegionToolkit
+Actions=PowerQuiet;PowerBalanced;PowerPerformance;BatteryConservation;
+
+[Desktop Action PowerQuiet]
+Name=Set Quiet Mode
+Exec=/opt/legion-toolkit/LegionToolkit power set quiet
+Icon=legion-toolkit
+
+[Desktop Action PowerBalanced]
+Name=Set Balanced Mode
+Exec=/opt/legion-toolkit/LegionToolkit power set balanced
+Icon=legion-toolkit
+
+[Desktop Action PowerPerformance]
+Name=Set Performance Mode
+Exec=/opt/legion-toolkit/LegionToolkit power set performance
+Icon=legion-toolkit
+
+[Desktop Action BatteryConservation]
+Name=Toggle Battery Conservation
+Exec=/opt/legion-toolkit/LegionToolkit battery conservation toggle
+Icon=legion-toolkit

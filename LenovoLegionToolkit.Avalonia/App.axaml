@@ -1,0 +1,141 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:LenovoLegionToolkit.Avalonia"
+             x:Class="LenovoLegionToolkit.Avalonia.App"
+             RequestedThemeVariant="Dark">
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="/Styles/DashboardStyles.axaml"/>
+
+        <!-- Global Styles -->
+        <Style Selector="Window">
+            <Setter Property="Background" Value="#1A1A1A"/>
+        </Style>
+
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="#444444"/>
+        </Style>
+
+        <Style Selector="Button:pressed">
+            <Setter Property="Background" Value="#555555"/>
+        </Style>
+
+        <Style Selector="Button:disabled">
+            <Setter Property="Opacity" Value="0.5"/>
+        </Style>
+
+        <Style Selector="ToggleSwitch">
+            <Setter Property="OnContent" Value="On"/>
+            <Setter Property="OffContent" Value="Off"/>
+        </Style>
+
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="10,6"/>
+        </Style>
+
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="CaretBrush" Value="White"/>
+        </Style>
+
+        <Style Selector="ScrollViewer">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
+        <Style Selector="ScrollBar">
+            <Setter Property="Background" Value="#2A2A2A"/>
+        </Style>
+
+        <Style Selector="ScrollBar /template/ Thumb">
+            <Setter Property="Background" Value="#555555"/>
+        </Style>
+
+        <Style Selector="ScrollBar /template/ Thumb:pointerover">
+            <Setter Property="Background" Value="#666666"/>
+        </Style>
+
+        <Style Selector="ProgressBar">
+            <Setter Property="Foreground" Value="#0078D4"/>
+            <Setter Property="Background" Value="#333333"/>
+        </Style>
+
+        <Style Selector="Slider">
+            <Setter Property="Foreground" Value="#0078D4"/>
+            <Setter Property="Background" Value="#333333"/>
+        </Style>
+
+        <Style Selector="Separator">
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="Height" Value="1"/>
+            <Setter Property="Margin" Value="0,10"/>
+        </Style>
+
+        <!-- Notification Styles -->
+        <Style Selector="Border.notification">
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Margin" Value="10"/>
+        </Style>
+
+        <Style Selector="Border.notification.success">
+            <Setter Property="Background" Value="#2D5A2D"/>
+        </Style>
+
+        <Style Selector="Border.notification.error">
+            <Setter Property="Background" Value="#5A2D2D"/>
+        </Style>
+
+        <Style Selector="Border.notification.warning">
+            <Setter Property="Background" Value="#5A4D2D"/>
+        </Style>
+
+        <Style Selector="Border.notification.info">
+            <Setter Property="Background" Value="#2D3D5A"/>
+        </Style>
+    </Application.Styles>
+
+    <Application.Resources>
+        <!-- Color Resources -->
+        <SolidColorBrush x:Key="BackgroundDark">#1A1A1A</SolidColorBrush>
+        <SolidColorBrush x:Key="BackgroundMedium">#252525</SolidColorBrush>
+        <SolidColorBrush x:Key="BackgroundLight">#2A2A2A</SolidColorBrush>
+        <SolidColorBrush x:Key="BorderDark">#333333</SolidColorBrush>
+        <SolidColorBrush x:Key="BorderLight">#555555</SolidColorBrush>
+        <SolidColorBrush x:Key="AccentColor">#0078D4</SolidColorBrush>
+        <SolidColorBrush x:Key="TextPrimary">White</SolidColorBrush>
+        <SolidColorBrush x:Key="TextSecondary">#808080</SolidColorBrush>
+        <SolidColorBrush x:Key="TextMuted">#606060</SolidColorBrush>
+        <SolidColorBrush x:Key="SuccessColor">#4CAF50</SolidColorBrush>
+        <SolidColorBrush x:Key="WarningColor">#FF9800</SolidColorBrush>
+        <SolidColorBrush x:Key="ErrorColor">#F44336</SolidColorBrush>
+    </Application.Resources>
+</Application>

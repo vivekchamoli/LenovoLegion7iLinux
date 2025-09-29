@@ -1,0 +1,450 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:LenovoLegionToolkit.Avalonia.ViewModels"
+             xmlns:conv="using:LenovoLegionToolkit.Avalonia.Converters"
+             x:Class="LenovoLegionToolkit.Avalonia.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+               Background="#2A2A2A"
+               Padding="20"
+               Margin="0,0,0,20">
+            <StackPanel>
+                <TextBlock Text="Settings"
+                         FontSize="28"
+                         FontWeight="Bold"
+                         Foreground="White"/>
+                <TextBlock Text="Configure Legion Toolkit preferences and behavior"
+                         FontSize="14"
+                         Foreground="#808080"
+                         Margin="0,5,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Settings Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Category List -->
+            <Border Grid.Column="0"
+                   Background="#2A2A2A"
+                   CornerRadius="8,0,0,8"
+                   Margin="0,0,1,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Categories}"
+                                 Margin="10">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Background="Transparent"
+                                       BorderThickness="0"
+                                       HorizontalAlignment="Stretch"
+                                       HorizontalContentAlignment="Left"
+                                       Padding="10"
+                                       Command="{Binding $parent[UserControl].DataContext.NavigateToCategoryCommand}"
+                                       CommandParameter="{Binding Name}">
+                                    <Button.Styles>
+                                        <Style Selector="Button:pointerover">
+                                            <Setter Property="Background" Value="#333333"/>
+                                        </Style>
+                                        <Style Selector="Button:pressed">
+                                            <Setter Property="Background" Value="#404040"/>
+                                        </Style>
+                                    </Button.Styles>
+
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <TextBlock Text="{Binding Icon}" FontSize="20"/>
+                                            <TextBlock Text="{Binding Name}"
+                                                     FontSize="14"
+                                                     FontWeight="SemiBold"
+                                                     Foreground="White"
+                                                     VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Description}"
+                                                 FontSize="11"
+                                                 Foreground="#808080"
+                                                 Margin="30,2,0,0"/>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Settings Panel -->
+            <Border Grid.Column="1"
+                   Background="#1E1E1E"
+                   CornerRadius="0,8,8,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                            Padding="20">
+                    <ContentControl>
+                        <ContentControl.Content>
+                            <StackPanel Spacing="20">
+                                <!-- General Settings -->
+                                <StackPanel IsVisible="{Binding SelectedCategory, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=General}">
+                                    <TextBlock Text="General Settings"
+                                             FontSize="20"
+                                             FontWeight="SemiBold"
+                                             Foreground="White"
+                                             Margin="0,0,0,20"/>
+
+                                    <Border Background="#2A2A2A"
+                                           CornerRadius="6"
+                                           Padding="15">
+                                        <StackPanel Spacing="15">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Auto Start" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Start Legion Toolkit when system boots" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.General.AutoStart}"/>
+                                            </Grid>
+
+                                            <Separator Background="#333333"/>
+
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Minimize to Tray" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Keep running in system tray when closed" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.General.MinimizeToTray}"/>
+                                            </Grid>
+
+                                            <Separator Background="#333333"/>
+
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Start Minimized" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Start in system tray without showing window" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.General.StartMinimized}"/>
+                                            </Grid>
+
+                                            <Separator Background="#333333"/>
+
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Check for Updates" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Automatically check for application updates" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.General.CheckForUpdates}"/>
+                                            </Grid>
+
+                                            <Separator Background="#333333"/>
+
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Enable Notifications" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Show system notifications for important events" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.General.EnableNotifications}"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Power Settings -->
+                                <StackPanel IsVisible="{Binding SelectedCategory, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Power}">
+                                    <TextBlock Text="Power Settings"
+                                             FontSize="20"
+                                             FontWeight="SemiBold"
+                                             Foreground="White"
+                                             Margin="0,0,0,20"/>
+
+                                    <Border Background="#2A2A2A"
+                                           CornerRadius="6"
+                                           Padding="15">
+                                        <StackPanel Spacing="15">
+                                            <StackPanel>
+                                                <TextBlock Text="Default Power Mode" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,5"/>
+                                                <ComboBox SelectedIndex="1" HorizontalAlignment="Stretch">
+                                                    <ComboBoxItem>Quiet</ComboBoxItem>
+                                                    <ComboBoxItem>Balanced</ComboBoxItem>
+                                                    <ComboBoxItem>Performance</ComboBoxItem>
+                                                </ComboBox>
+                                            </StackPanel>
+
+                                            <Separator Background="#333333"/>
+
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Restore Power Mode on Startup" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Remember and restore last power mode" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.Features.RestorePowerModeOnStartup}"/>
+                                            </Grid>
+
+                                            <Separator Background="#333333"/>
+
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Sync with AC Power" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Automatically switch power modes based on AC connection" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.Features.SyncPowerModeWithAC}"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Battery Settings -->
+                                <StackPanel IsVisible="{Binding SelectedCategory, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Battery}">
+                                    <TextBlock Text="Battery Settings"
+                                             FontSize="20"
+                                             FontWeight="SemiBold"
+                                             Foreground="White"
+                                             Margin="0,0,0,20"/>
+
+                                    <Border Background="#2A2A2A"
+                                           CornerRadius="6"
+                                           Padding="15">
+                                        <StackPanel Spacing="15">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Enable Conservation Mode" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Limit battery charge to preserve battery life" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.Features.EnableConservationMode}"/>
+                                            </Grid>
+
+                                            <StackPanel>
+                                                <TextBlock Text="Conservation Mode Threshold" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,5"/>
+                                                <Grid ColumnDefinitions="*,50">
+                                                    <Slider Grid.Column="0"
+                                                          Minimum="20"
+                                                          Maximum="80"
+                                                          Value="{Binding Settings.Features.ConservationModeThreshold}"
+                                                          TickFrequency="10"
+                                                          IsSnapToTickEnabled="True"/>
+                                                    <TextBlock Grid.Column="1"
+                                                             Text="{Binding Settings.Features.ConservationModeThreshold, StringFormat={}{0}%}"
+                                                             HorizontalAlignment="Center"
+                                                             VerticalAlignment="Center"
+                                                             Foreground="White"/>
+                                                </Grid>
+                                            </StackPanel>
+
+                                            <Separator Background="#333333"/>
+
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Enable Rapid Charge" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Charge battery faster when needed" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.Features.EnableRapidCharge}"/>
+                                            </Grid>
+
+                                            <Separator Background="#333333"/>
+
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Low Battery Notification" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Show notification when battery is low" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.Features.LowBatteryNotification}"/>
+                                            </Grid>
+
+                                            <StackPanel>
+                                                <TextBlock Text="Low Battery Threshold" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,5"/>
+                                                <Grid ColumnDefinitions="*,50">
+                                                    <Slider Grid.Column="0"
+                                                          Minimum="5"
+                                                          Maximum="50"
+                                                          Value="{Binding Settings.Features.LowBatteryThreshold}"
+                                                          TickFrequency="5"
+                                                          IsSnapToTickEnabled="True"/>
+                                                    <TextBlock Grid.Column="1"
+                                                             Text="{Binding Settings.Features.LowBatteryThreshold, StringFormat={}{0}%}"
+                                                             HorizontalAlignment="Center"
+                                                             VerticalAlignment="Center"
+                                                             Foreground="White"/>
+                                                </Grid>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Monitoring Settings -->
+                                <StackPanel IsVisible="{Binding SelectedCategory, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Monitoring}">
+                                    <TextBlock Text="Monitoring Settings"
+                                             FontSize="20"
+                                             FontWeight="SemiBold"
+                                             Foreground="White"
+                                             Margin="0,0,0,20"/>
+
+                                    <Border Background="#2A2A2A"
+                                           CornerRadius="6"
+                                           Padding="15">
+                                        <StackPanel Spacing="15">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Enable Monitoring" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Monitor system temperatures and status" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.Monitoring.EnableMonitoring}"/>
+                                            </Grid>
+
+                                            <StackPanel>
+                                                <TextBlock Text="Update Interval (seconds)" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,5"/>
+                                                <Grid ColumnDefinitions="*,50">
+                                                    <Slider Grid.Column="0"
+                                                          Minimum="1"
+                                                          Maximum="60"
+                                                          Value="{Binding Settings.Monitoring.UpdateIntervalSeconds}"
+                                                          TickFrequency="5"
+                                                          IsSnapToTickEnabled="True"/>
+                                                    <TextBlock Grid.Column="1"
+                                                             Text="{Binding Settings.Monitoring.UpdateIntervalSeconds, StringFormat={}{0}s}"
+                                                             HorizontalAlignment="Center"
+                                                             VerticalAlignment="Center"
+                                                             Foreground="White"/>
+                                                </Grid>
+                                            </StackPanel>
+
+                                            <Separator Background="#333333"/>
+
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Log to File" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Save monitoring data to log files" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.Monitoring.LogToFile}"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Advanced Settings -->
+                                <StackPanel IsVisible="{Binding SelectedCategory, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Advanced}">
+                                    <TextBlock Text="Advanced Settings"
+                                             FontSize="20"
+                                             FontWeight="SemiBold"
+                                             Foreground="White"
+                                             Margin="0,0,0,20"/>
+
+                                    <Border Background="#FF4444"
+                                           CornerRadius="6"
+                                           Padding="10"
+                                           Margin="0,0,0,15">
+                                        <StackPanel>
+                                            <TextBlock Text="⚠️ Warning" FontSize="14" FontWeight="Bold" Foreground="White"/>
+                                            <TextBlock Text="These settings can affect system stability. Only change if you know what you're doing."
+                                                     FontSize="12"
+                                                     Foreground="White"
+                                                     TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Background="#2A2A2A"
+                                           CornerRadius="6"
+                                           Padding="15">
+                                        <StackPanel Spacing="15">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Enable Debug Mode" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Show debug information and verbose logging" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.Advanced.EnableDebugMode}"/>
+                                            </Grid>
+
+                                            <Separator Background="#333333"/>
+
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Enable Experimental Features" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Access features that are still in testing" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.Advanced.EnableExperimentalFeatures}"/>
+                                            </Grid>
+
+                                            <Separator Background="#333333"/>
+
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="Enable IPC Server" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="Allow command-line interface control" FontSize="12" Foreground="#808080"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding Settings.Advanced.EnableIpcServer}"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+                        </ContentControl.Content>
+                    </ContentControl>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- Footer with Save/Reset buttons -->
+        <Border Grid.Row="2"
+               Background="#1A1A1A"
+               Padding="20,15">
+            <Grid>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button Background="#0078D4"
+                           BorderThickness="0"
+                           CornerRadius="4"
+                           Padding="20,8"
+                           Command="{Binding SaveCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="💾" FontSize="14"/>
+                            <TextBlock Text="Save Settings" FontSize="12" Foreground="White"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Background="#666666"
+                           BorderThickness="0"
+                           CornerRadius="4"
+                           Padding="20,8"
+                           Command="{Binding ResetCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="↺" FontSize="14"/>
+                            <TextBlock Text="Reset to Defaults" FontSize="12" Foreground="White"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Background="#444444"
+                           BorderThickness="0"
+                           CornerRadius="4"
+                           Padding="20,8"
+                           Command="{Binding ExportCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="📤" FontSize="14"/>
+                            <TextBlock Text="Export" FontSize="12" Foreground="White"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Background="#444444"
+                           BorderThickness="0"
+                           CornerRadius="4"
+                           Padding="20,8"
+                           Command="{Binding ImportCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="📥" FontSize="14"/>
+                            <TextBlock Text="Import" FontSize="12" Foreground="White"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <TextBlock Text="{Binding StatusText}"
+                         HorizontalAlignment="Right"
+                         VerticalAlignment="Center"
+                         Foreground="#808080"
+                         FontSize="12"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

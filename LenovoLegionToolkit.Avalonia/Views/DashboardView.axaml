@@ -1,0 +1,319 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:LenovoLegionToolkit.Avalonia.ViewModels"
+             xmlns:conv="using:LenovoLegionToolkit.Avalonia.Converters"
+             x:Class="LenovoLegionToolkit.Avalonia.Views.DashboardView"
+             x:DataType="vm:DashboardViewModel"
+             x:CompileBindings="False">
+
+    <Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="20">
+                <!-- Header -->
+                <Border Background="#2A2A2A"
+                       CornerRadius="8"
+                       Padding="20">
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock Text="Dashboard"
+                                      FontSize="28"
+                                      FontWeight="Bold"
+                                      Foreground="White"/>
+                            <TextBlock Text="System Overview and Quick Controls"
+                                      FontSize="14"
+                                      Foreground="#808080"
+                                      Margin="0,5,0,0"/>
+                        </StackPanel>
+
+                        <Button HorizontalAlignment="Right"
+                               VerticalAlignment="Top"
+                               Background="#333333"
+                               BorderThickness="0"
+                               CornerRadius="4"
+                               Padding="10,5"
+                               Command="{Binding RefreshCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="🔄" FontSize="14"/>
+                                <TextBlock Text="Refresh" FontSize="12" Foreground="White"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Quick Stats -->
+                <Grid ColumnDefinitions="*,*,*,*">
+                    <Grid.Styles>
+                        <Style Selector="Border.stat-card">
+                            <Setter Property="Background" Value="#2A2A2A"/>
+                            <Setter Property="CornerRadius" Value="8"/>
+                            <Setter Property="Padding" Value="15"/>
+                            <Setter Property="Margin" Value="0,0,10,0"/>
+                        </Style>
+                        <Style Selector="Border.stat-card:nth-last-child(1)">
+                            <Setter Property="Margin" Value="0"/>
+                        </Style>
+                    </Grid.Styles>
+
+                    <Border Grid.Column="0" Classes="stat-card">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="⚡" FontSize="20"/>
+                                <TextBlock Text="Power Mode" FontSize="12" Foreground="#808080"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding CurrentPowerMode}"
+                                      FontSize="18"
+                                      FontWeight="SemiBold"
+                                      Foreground="White"
+                                      Margin="0,5,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Classes="stat-card">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="🔋" FontSize="20"/>
+                                <TextBlock Text="Battery" FontSize="12" Foreground="#808080"/>
+                            </StackPanel>
+                            <TextBlock FontSize="18"
+                                      FontWeight="SemiBold"
+                                      Foreground="White"
+                                      Margin="0,5,0,0">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0}%">
+                                        <Binding Path="BatteryInfo.ChargeLevel" FallbackValue="--"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Classes="stat-card">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="🌡️" FontSize="20"/>
+                                <TextBlock Text="CPU Temp" FontSize="12" Foreground="#808080"/>
+                            </StackPanel>
+                            <TextBlock FontSize="18"
+                                      FontWeight="SemiBold"
+                                      Foreground="White"
+                                      Margin="0,5,0,0">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0:F0}°C">
+                                        <Binding Path="ThermalInfo.CpuTemperature" FallbackValue="--"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="3" Classes="stat-card">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="💨" FontSize="20"/>
+                                <TextBlock Text="Fan Speed" FontSize="12" Foreground="#808080"/>
+                            </StackPanel>
+                            <TextBlock Text="Auto"
+                                      FontSize="18"
+                                      FontWeight="SemiBold"
+                                      Foreground="White"
+                                      Margin="0,5,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Feature Groups -->
+                <ItemsControl ItemsSource="{Binding FeatureGroups}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#2A2A2A"
+                                   CornerRadius="8"
+                                   Margin="0,0,0,15"
+                                   Padding="20">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}"
+                                              FontSize="18"
+                                              FontWeight="SemiBold"
+                                              Foreground="White"
+                                              Margin="0,0,0,15"/>
+
+                                    <ItemsControl ItemsSource="{Binding Features}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#1E1E1E"
+                                                       CornerRadius="6"
+                                                       Width="280"
+                                                       Margin="0,0,15,15"
+                                                       Padding="15">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+
+                                                        <!-- Header -->
+                                                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10">
+                                                            <TextBlock Text="{Binding Icon}" FontSize="24"/>
+                                                            <StackPanel VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Title}"
+                                                                         FontSize="14"
+                                                                         FontWeight="SemiBold"
+                                                                         Foreground="White"/>
+                                                                <TextBlock Text="{Binding Status}"
+                                                                         FontSize="11"
+                                                                         Foreground="#808080"/>
+                                                            </StackPanel>
+                                                        </StackPanel>
+
+                                                        <!-- Description -->
+                                                        <TextBlock Grid.Row="1"
+                                                                 Text="{Binding Description}"
+                                                                 FontSize="12"
+                                                                 Foreground="#A0A0A0"
+                                                                 TextWrapping="Wrap"
+                                                                 Margin="0,10,0,10"/>
+
+                                                        <!-- Control -->
+                                                        <ContentControl Grid.Row="2">
+                                                            <ContentControl.Content>
+                                                                <Panel>
+                                                                    <!-- Toggle Switch -->
+                                                                    <ToggleSwitch IsVisible="{Binding Type, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Toggle}"
+                                                                                IsChecked="{Binding IsEnabled}"
+                                                                                HorizontalAlignment="Left"/>
+
+                                                                    <!-- Dropdown -->
+                                                                    <ComboBox IsVisible="{Binding Type, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Dropdown}"
+                                                                            ItemsSource="{Binding Options}"
+                                                                            SelectedItem="{Binding SelectedOption}"
+                                                                            HorizontalAlignment="Stretch"/>
+
+                                                                    <!-- Button -->
+                                                                    <Button IsVisible="{Binding Type, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Button}"
+                                                                           Content="Execute"
+                                                                           HorizontalAlignment="Left"
+                                                                           Command="{Binding $parent[ItemsControl].DataContext.ExecuteActionCommand}"
+                                                                           CommandParameter="{Binding}"/>
+
+                                                                    <!-- Display Only -->
+                                                                    <TextBlock IsVisible="{Binding Type, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Display}"
+                                                                             Text="{Binding Status}"
+                                                                             FontSize="14"
+                                                                             FontWeight="SemiBold"
+                                                                             Foreground="#0078D4"/>
+                                                                </Panel>
+                                                            </ContentControl.Content>
+                                                        </ContentControl>
+
+                                                        <!-- Loading Overlay -->
+                                                        <Border Grid.RowSpan="3"
+                                                               Background="#AA000000"
+                                                               CornerRadius="6"
+                                                               IsVisible="{Binding IsLoading}">
+                                                            <ProgressBar IsIndeterminate="True"
+                                                                       Width="50"
+                                                                       Height="4"
+                                                                       VerticalAlignment="Center"
+                                                                       HorizontalAlignment="Center"/>
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Quick Actions -->
+                <Border Background="#2A2A2A"
+                       CornerRadius="8"
+                       Padding="20"
+                       IsVisible="{Binding QuickActions.Count, Converter={x:Static conv:NotEqualConverter.Instance}, ConverterParameter=0}">
+                    <StackPanel>
+                        <TextBlock Text="Quick Actions"
+                                  FontSize="18"
+                                  FontWeight="SemiBold"
+                                  Foreground="White"
+                                  Margin="0,0,0,15"/>
+
+                        <ItemsControl ItemsSource="{Binding QuickActions}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="10"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Background="#333333"
+                                           BorderThickness="0"
+                                           CornerRadius="4"
+                                           Padding="15,10"
+                                           Command="{Binding $parent[ItemsControl].DataContext.ExecuteActionCommand}"
+                                           CommandParameter="{Binding}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{Binding Icon}" FontSize="16"/>
+                                            <TextBlock Text="{Binding Title}" FontSize="12" Foreground="White"/>
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- System Status -->
+                <Border Background="#2A2A2A"
+                       CornerRadius="8"
+                       Padding="20"
+                       IsVisible="{Binding StatusItems.Count, Converter={x:Static conv:NotEqualConverter.Instance}, ConverterParameter=0}">
+                    <StackPanel>
+                        <TextBlock Text="System Status"
+                                  FontSize="18"
+                                  FontWeight="SemiBold"
+                                  Foreground="White"
+                                  Margin="0,0,0,15"/>
+
+                        <ItemsControl ItemsSource="{Binding StatusItems}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="30,150,*" Margin="0,5">
+                                        <TextBlock Grid.Column="0" Text="{Binding Icon}" FontSize="16"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="12" Foreground="#808080"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Value}" FontSize="12" Foreground="White" FontWeight="SemiBold"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Error Display -->
+        <Border Background="#AA000000"
+               CornerRadius="8"
+               Padding="20"
+               IsVisible="{Binding HasError}"
+               VerticalAlignment="Top"
+               Margin="20">
+            <StackPanel>
+                <TextBlock Text="⚠️ Error" FontSize="16" FontWeight="Bold" Foreground="#FF6B6B"/>
+                <TextBlock Text="{Binding ErrorMessage}"
+                         FontSize="12"
+                         Foreground="White"
+                         TextWrapping="Wrap"
+                         Margin="0,5,0,0"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="LenovoLegionToolkit.Avalonia.Controls.FeatureCardControl"
+             x:CompileBindings="False">
+
+    <Border Background="#2A2A2A"
+            CornerRadius="8"
+            Padding="20"
+            Cursor="Hand">
+        <Border.Transitions>
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.2"/>
+            </Transitions>
+        </Border.Transitions>
+        <Border.Styles>
+            <Style Selector="Border:pointerover">
+                <Setter Property="Background" Value="#333333"/>
+            </Style>
+        </Border.Styles>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Icon -->
+            <TextBlock Grid.Row="0"
+                      Text="{Binding Path=Icon}"
+                      FontSize="32"
+                      HorizontalAlignment="Center"
+                      Margin="0,0,0,10"/>
+
+            <!-- Title -->
+            <TextBlock Grid.Row="1"
+                      Text="{Binding Path=Title}"
+                      FontSize="16"
+                      FontWeight="SemiBold"
+                      HorizontalAlignment="Center"
+                      Foreground="White"
+                      TextWrapping="Wrap"
+                      Margin="0,0,0,5"/>
+
+            <!-- Description -->
+            <TextBlock Grid.Row="2"
+                      Text="{Binding Path=Description}"
+                      FontSize="12"
+                      Foreground="#808080"
+                      HorizontalAlignment="Center"
+                      TextAlignment="Center"
+                      TextWrapping="Wrap"
+                      Margin="0,5"/>
+
+            <!-- Status or Action Area -->
+            <ContentPresenter Grid.Row="3"
+                            Name="PART_ActionArea"
+                            Content="{Binding Path=ActionContent}"
+                            HorizontalAlignment="Center"
+                            Margin="0,10,0,0"/>
+        </Grid>
+    </Border>
+</UserControl>

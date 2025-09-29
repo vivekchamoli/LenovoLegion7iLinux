@@ -1,0 +1,335 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:LenovoLegionToolkit.Avalonia.ViewModels"
+             xmlns:models="using:LenovoLegionToolkit.Avalonia.Models"
+             xmlns:conv="using:LenovoLegionToolkit.Avalonia.Converters"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+             x:Class="LenovoLegionToolkit.Avalonia.Views.AutomationView"
+             x:DataType="vm:AutomationViewModel"
+             x:CompileBindings="False">
+
+  <Grid Margin="20" RowDefinitions="Auto,*">
+    <!-- Header -->
+    <Border Grid.Row="0"
+            Background="{DynamicResource CardBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="20"
+            Margin="0,0,0,20">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="15">
+          <TextBlock Text="🤖" FontSize="32" VerticalAlignment="Center"/>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="Automation" FontSize="24" FontWeight="Bold"/>
+            <TextBlock Text="{Binding StatusText}"
+                       Foreground="{DynamicResource SecondaryTextBrush}"
+                       FontSize="12"/>
+          </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+          <Button Command="{Binding ToggleAutomationCommand}"
+                  Classes.success="{Binding IsAutomationEnabled}"
+                  Classes.warning="{Binding !IsAutomationEnabled}"
+                  MinWidth="120">
+            <Button.Content>
+              <TextBlock>
+                <TextBlock.Text>
+                  <MultiBinding StringFormat="Automation: {0}">
+                    <Binding Path="IsAutomationEnabled" />
+                  </MultiBinding>
+                </TextBlock.Text>
+              </TextBlock>
+            </Button.Content>
+          </Button>
+          <Button Content="⚙️"
+                  ToolTip.Tip="Settings"
+                  Width="40"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Main Content -->
+    <TabControl Grid.Row="1">
+      <!-- Profiles Tab -->
+      <TabItem Header="Profiles">
+        <Grid Margin="10">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+
+          <!-- Profile Actions -->
+          <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+            <Button Content="➕ Create Profile" Command="{Binding CreateProfileCommand}"/>
+            <Button Content="📸 From Current State" Command="{Binding CreateProfileFromCurrentCommand}"/>
+            <Button Content="📥 Import" Command="{Binding ImportConfigCommand}"/>
+            <Button Content="📤 Export" Command="{Binding ExportConfigCommand}"/>
+          </StackPanel>
+
+          <!-- Profiles List -->
+          <ScrollViewer Grid.Row="1">
+            <ItemsControl ItemsSource="{Binding Profiles}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="models:Profile">
+                  <Border Background="{DynamicResource CardBackgroundBrush}"
+                          BorderBrush="{DynamicResource BorderBrush}"
+                          BorderThickness="1"
+                          CornerRadius="8"
+                          Padding="15"
+                          Margin="0,0,0,10">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                      <!-- Profile Icon -->
+                      <TextBlock Grid.Column="0"
+                                 Text="📋"
+                                 FontSize="24"
+                                 VerticalAlignment="Center"
+                                 Margin="0,0,15,0"/>
+
+                      <!-- Profile Info -->
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                          <TextBlock Text="{Binding Name}"
+                                     FontWeight="Bold"
+                                     FontSize="14"/>
+                          <TextBlock Text="⭐"
+                                     IsVisible="{Binding IsDefault}"
+                                     ToolTip.Tip="Default Profile"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding Description}"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   FontSize="12"/>
+                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" Margin="0,5,0,0">
+                          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="5" Margin="0,0,15,0">
+                            <TextBlock Text="⚡" FontSize="12"/>
+                            <TextBlock Text="{Binding PowerMode}" FontSize="11"/>
+                          </StackPanel>
+                          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" Margin="0,0,15,0"
+                                      IsVisible="{Binding BatteryChargeLimit, Converter={x:Static conv:IsNotNullConverter.Instance}}">
+                            <TextBlock Text="🔋" FontSize="12"/>
+                            <TextBlock Text="{Binding BatteryChargeLimit, StringFormat='{}{0}%'}" FontSize="11"/>
+                          </StackPanel>
+                          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="5" Margin="0,0,15,0"
+                                      IsVisible="{Binding FanMode, Converter={x:Static conv:IsNotNullConverter.Instance}}">
+                            <TextBlock Text="🌀" FontSize="12"/>
+                            <TextBlock Text="{Binding FanMode}" FontSize="11"/>
+                          </StackPanel>
+                          <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5"
+                                      IsVisible="{Binding RefreshRate, Converter={x:Static conv:IsNotNullConverter.Instance}}">
+                            <TextBlock Text="🖥️" FontSize="12"/>
+                            <TextBlock Text="{Binding RefreshRate, StringFormat='{}{0}Hz'}" FontSize="11"/>
+                          </StackPanel>
+                        </Grid>
+                      </StackPanel>
+
+                      <!-- Profile Actions -->
+                      <StackPanel Grid.Column="2"
+                                  Orientation="Horizontal"
+                                  Spacing="5"
+                                  VerticalAlignment="Center">
+                        <Button Content="Apply"
+                                Command="{Binding $parent[UserControl].DataContext.ApplyProfileCommand}"
+                                CommandParameter="{Binding}"
+                                Classes="success"/>
+                        <Button Content="⭐"
+                                Command="{Binding $parent[UserControl].DataContext.SetDefaultProfileCommand}"
+                                CommandParameter="{Binding}"
+                                ToolTip.Tip="Set as Default"
+                                Width="35"/>
+                        <Button Content="✏️"
+                                Command="{Binding $parent[UserControl].DataContext.EditProfileCommand}"
+                                CommandParameter="{Binding}"
+                                ToolTip.Tip="Edit"
+                                Width="35"/>
+                        <Button Content="🗑️"
+                                Command="{Binding $parent[UserControl].DataContext.DeleteProfileCommand}"
+                                CommandParameter="{Binding}"
+                                ToolTip.Tip="Delete"
+                                Classes="danger"
+                                Width="35"/>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Grid>
+      </TabItem>
+
+      <!-- Rules Tab -->
+      <TabItem Header="Rules">
+        <Grid Margin="10">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+
+          <!-- Rule Actions -->
+          <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+            <Button Content="➕ Create Rule" Command="{Binding CreateRuleCommand}"/>
+            <Button Content="🔄 Refresh" Command="{Binding RefreshCommand}"/>
+          </StackPanel>
+
+          <!-- Rules List -->
+          <ScrollViewer Grid.Row="1">
+            <ItemsControl ItemsSource="{Binding Rules}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="models:AutomationRule">
+                  <Border Background="{DynamicResource CardBackgroundBrush}"
+                          BorderBrush="{DynamicResource BorderBrush}"
+                          BorderThickness="1"
+                          CornerRadius="8"
+                          Padding="15"
+                          Margin="0,0,0,10">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                      <!-- Rule Status -->
+                      <StackPanel Grid.Column="0"
+                                  VerticalAlignment="Center"
+                                  Margin="0,0,15,0">
+                        <TextBlock Text="{Binding IsEnabled, Converter={x:Static conv:BoolToStringConverter.Instance}, ConverterParameter='🔴,🟢'}"
+                                   FontSize="20"/>
+                        <TextBlock Text="{Binding Priority, StringFormat='P{0}'}"
+                                   FontSize="10"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"/>
+                      </StackPanel>
+
+                      <!-- Rule Info -->
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}"
+                                   FontWeight="Bold"
+                                   FontSize="14"/>
+                        <TextBlock Text="{Binding Description}"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   FontSize="12"/>
+                        <StackPanel Orientation="Horizontal" Spacing="15" Margin="0,5,0,0">
+                          <StackPanel Orientation="Horizontal" Spacing="5">
+                            <TextBlock Text="📍" FontSize="12"/>
+                            <TextBlock Text="{Binding Triggers.Count, StringFormat='{}{0} triggers'}" FontSize="11"/>
+                          </StackPanel>
+                          <StackPanel Orientation="Horizontal" Spacing="5">
+                            <TextBlock Text="⚡" FontSize="12"/>
+                            <TextBlock Text="{Binding Action}" FontSize="11"/>
+                          </StackPanel>
+                          <StackPanel Orientation="Horizontal" Spacing="5"
+                                      IsVisible="{Binding LastTriggered, Converter={x:Static conv:IsNotNullConverter.Instance}}">
+                            <TextBlock Text="🕐" FontSize="12"/>
+                            <TextBlock Text="{Binding LastTriggered, StringFormat='{}{0:HH:mm}'}" FontSize="11"/>
+                          </StackPanel>
+                          <StackPanel Orientation="Horizontal" Spacing="5"
+                                      IsVisible="{Binding HasBeenTriggered}">
+                            <TextBlock Text="📊" FontSize="12"/>
+                            <TextBlock Text="{Binding TriggerCount, StringFormat='{}{0} times'}" FontSize="11"/>
+                          </StackPanel>
+                        </StackPanel>
+                      </StackPanel>
+
+                      <!-- Rule Actions -->
+                      <StackPanel Grid.Column="2"
+                                  Orientation="Horizontal"
+                                  Spacing="5"
+                                  VerticalAlignment="Center">
+                        <Button Content="{Binding IsEnabled, Converter={x:Static conv:BoolToStringConverter.Instance}, ConverterParameter='Enable,Disable'}"
+                                Command="{Binding $parent[UserControl].DataContext.ToggleRuleCommand}"
+                                CommandParameter="{Binding}"
+                                Classes.success="{Binding !IsEnabled}"
+                                Classes.warning="{Binding IsEnabled}"
+                                MinWidth="70"/>
+                        <Button Content="🧪"
+                                Command="{Binding $parent[UserControl].DataContext.TestRuleCommand}"
+                                CommandParameter="{Binding}"
+                                ToolTip.Tip="Test Rule"
+                                Width="35"/>
+                        <Button Content="✏️"
+                                Command="{Binding $parent[UserControl].DataContext.EditRuleCommand}"
+                                CommandParameter="{Binding}"
+                                ToolTip.Tip="Edit"
+                                Width="35"/>
+                        <Button Content="🗑️"
+                                Command="{Binding $parent[UserControl].DataContext.DeleteRuleCommand}"
+                                CommandParameter="{Binding}"
+                                ToolTip.Tip="Delete"
+                                Classes="danger"
+                                Width="35"/>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Grid>
+      </TabItem>
+
+      <!-- History Tab -->
+      <TabItem Header="History">
+        <Grid Margin="10">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+
+          <!-- History Actions -->
+          <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+            <Button Content="🗑️ Clear History"
+                    Command="{Binding ClearHistoryCommand}"
+                    Classes="danger"/>
+            <Button Content="🔄 Refresh"
+                    Command="{Binding RefreshCommand}"/>
+          </StackPanel>
+
+          <!-- History List -->
+          <ScrollViewer Grid.Row="1">
+            <DataGrid ItemsSource="{Binding History}"
+                      AutoGenerateColumns="False"
+                      CanUserSortColumns="True"
+                      GridLinesVisibility="Horizontal"
+                      BorderThickness="1"
+                      BorderBrush="{DynamicResource BorderBrush}">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Time"
+                                    Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"
+                                    Width="150"/>
+                <DataGridTextColumn Header="Rule"
+                                    Binding="{Binding Rule.Name}"
+                                    Width="*"/>
+                <DataGridTextColumn Header="Action"
+                                    Binding="{Binding Action}"
+                                    Width="150"/>
+                <DataGridTemplateColumn Header="Status" Width="80">
+                  <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate x:DataType="models:AutomationEvent">
+                      <TextBlock Text="{Binding Success, Converter={x:Static conv:BoolToStringConverter.Instance}, ConverterParameter='❌,✅'}"
+                                 HorizontalAlignment="Center"/>
+                    </DataTemplate>
+                  </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Error"
+                                    Binding="{Binding ErrorMessage}"
+                                    Width="*"/>
+              </DataGrid.Columns>
+            </DataGrid>
+          </ScrollViewer>
+        </Grid>
+      </TabItem>
+    </TabControl>
+
+    <!-- Loading Overlay -->
+    <Border Grid.RowSpan="2"
+            Background="#80000000"
+            IsVisible="{Binding IsLoading}">
+      <StackPanel HorizontalAlignment="Center"
+                  VerticalAlignment="Center">
+        <ProgressBar IsIndeterminate="True" Width="200"/>
+        <TextBlock Text="Processing..."
+                   HorizontalAlignment="Center"
+                   Margin="0,10,0,0"
+                   Foreground="White"/>
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

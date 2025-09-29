@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="using:LenovoLegionToolkit.Avalonia.Converters"
+             x:Class="LenovoLegionToolkit.Avalonia.Controls.NavigationMenu"
+             x:CompileBindings="False">
+
+    <Border Background="#1E1E1E">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding NavigationItems, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Classes="NavigationButton"
+                               Command="{Binding NavigationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                               CommandParameter="{Binding}"
+                               IsEnabled="{Binding IsEnabled}"
+                               Margin="5">
+                            <Button.Styles>
+                                <Style Selector="Button.NavigationButton">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="Padding" Value="15,10"/>
+                                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                </Style>
+                                <Style Selector="Button.NavigationButton:pointerover">
+                                    <Setter Property="Background" Value="#2A2A2A"/>
+                                </Style>
+                                <Style Selector="Button.NavigationButton:pressed">
+                                    <Setter Property="Background" Value="#333333"/>
+                                </Style>
+                                <Style Selector="Button.NavigationButton[Tag=Selected]">
+                                    <Setter Property="Background" Value="#0078D4"/>
+                                </Style>
+                                <Style Selector="Button.NavigationButton:disabled">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </Style>
+                            </Button.Styles>
+                            <Button.Tag>
+                                <MultiBinding Converter="{x:Static conv:NavigationItemSelectedConverter.Instance}">
+                                    <Binding Path="."/>
+                                    <Binding Path="SelectedItem" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                </MultiBinding>
+                            </Button.Tag>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <TextBlock Text="{Binding Icon}"
+                                         FontSize="18"
+                                         VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Name}"
+                                         FontSize="14"
+                                         VerticalAlignment="Center"
+                                         Foreground="White"/>
+                            </StackPanel>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Border>
+</UserControl>
