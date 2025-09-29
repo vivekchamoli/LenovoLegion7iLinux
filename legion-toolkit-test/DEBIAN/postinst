@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+
+echo "Configuring Legion Toolkit Test..."
+
+# Update desktop database
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database /usr/share/applications/ || true
+fi
+
+# Update icon cache
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+    gtk-update-icon-cache /usr/share/icons/hicolor/ || true
+fi
+
+echo "Legion Toolkit Test installation completed!"
+echo "You can run it with: legion-toolkit-test"
+
+exit 0

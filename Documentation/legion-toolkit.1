@@ -1,0 +1,375 @@
+.TH LEGION-TOOLKIT 1 "September 2025" "Version 1.0.0" "Legion Toolkit Manual"
+.SH NAME
+legion-toolkit \- Control utility for Lenovo Legion laptops
+
+.SH SYNOPSIS
+.B legion-toolkit
+[\fIOPTIONS\fR]
+.br
+.B legion-toolkit
+\fICOMMAND\fR [\fISUBCOMMAND\fR] [\fIARGS\fR]
+
+.SH DESCRIPTION
+.B legion-toolkit
+provides comprehensive control over Lenovo Legion laptop hardware features on Linux.
+It offers both a graphical user interface and a command-line interface for managing
+power modes, battery settings, thermal controls, RGB keyboard lighting, display settings,
+and automation profiles.
+
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Display help information and exit.
+
+.TP
+.BR \-v ", " \-\-verbose
+Enable verbose output for debugging.
+
+.TP
+.BR \-j ", " \-\-json
+Output results in JSON format (CLI mode only).
+
+.TP
+.BR \-\-version
+Display version information and exit.
+
+.TP
+.BR \-\-daemon
+Run in daemon mode for system service.
+
+.TP
+.BR \-\-system\-daemon
+Run as system-wide daemon with elevated privileges.
+
+.TP
+.BR \-\-no\-gui
+Run in CLI mode only, without starting the GUI.
+
+.SH COMMANDS
+
+.SS Power Management
+.TP
+.B power get
+Display the current power mode.
+
+.TP
+.B power set \fIMODE\fR
+Set the power mode. Valid modes are:
+.RS
+.IP \(bu 2
+quiet - Minimal performance, lowest fan noise
+.IP \(bu 2
+balanced - Balance between performance and noise
+.IP \(bu 2
+performance - Maximum performance
+.IP \(bu 2
+custom - User-defined settings
+.RE
+
+.TP
+.B power list
+List all available power modes.
+
+.SS Battery Management
+.TP
+.B battery status
+Display current battery status including charge level, health, and settings.
+
+.TP
+.B battery charge-limit \fIPERCENT\fR
+Set the maximum battery charge limit (60-100%).
+
+.TP
+.B battery conservation \fIon|off\fR
+Enable or disable battery conservation mode (limits charge to ~60%).
+
+.TP
+.B battery rapid-charge \fIon|off\fR
+Enable or disable rapid charging.
+
+.SS Thermal Control
+.TP
+.B thermal status
+Display current thermal information including CPU/GPU temperatures.
+
+.TP
+.B thermal fan-mode \fIMODE\fR
+Set the fan control mode:
+.RS
+.IP \(bu 2
+auto - Automatic fan control
+.IP \(bu 2
+quiet - Minimize fan noise
+.IP \(bu 2
+balanced - Balance cooling and noise
+.IP \(bu 2
+performance - Maximum cooling
+.IP \(bu 2
+custom - User-defined fan curves
+.RE
+
+.TP
+.B thermal monitor \fI[INTERVAL]\fR
+Monitor temperatures in real-time (default interval: 2 seconds).
+
+.SS RGB Keyboard
+.TP
+.B rgb status
+Display current RGB keyboard settings.
+
+.TP
+.B rgb static \fIRED GREEN BLUE\fR
+Set static color (values: 0-255).
+
+.TP
+.B rgb effect \fIEFFECT\fR
+Set lighting effect:
+.RS
+.IP \(bu 2
+breathing - Breathing effect
+.IP \(bu 2
+rainbow - Rainbow wave
+.IP \(bu 2
+wave - Color wave
+.IP \(bu 2
+ripple - Ripple effect
+.RE
+
+.TP
+.B rgb brightness \fILEVEL\fR
+Set keyboard backlight brightness (0-100).
+
+.TP
+.B rgb zone \fIZONE COLOR\fR
+Set color for specific zone (1-4).
+
+.TP
+.B rgb off
+Turn off keyboard backlighting.
+
+.SS Display Control
+.TP
+.B display list
+List all connected displays.
+
+.TP
+.B display refresh-rate \fI[DISPLAY] RATE\fR
+Set display refresh rate (e.g., 60, 144, 165 Hz).
+
+.TP
+.B display brightness \fI[DISPLAY] LEVEL\fR
+Set display brightness (0-100).
+
+.TP
+.B display night-light \fIon|off\fR
+Enable or disable night light (blue light filter).
+
+.TP
+.B display hdr \fI[DISPLAY] on|off\fR
+Enable or disable HDR if supported.
+
+.SS Automation
+.TP
+.B automation status
+Display automation service status.
+
+.TP
+.B automation start
+Start the automation service.
+
+.TP
+.B automation stop
+Stop the automation service.
+
+.TP
+.B automation profiles list
+List all automation profiles.
+
+.TP
+.B automation profiles apply \fINAME\fR
+Apply a specific profile by name.
+
+.TP
+.B automation profiles create-from-current \fI\-n NAME\fR
+Create a new profile from current settings.
+
+.TP
+.B automation rules list
+List all automation rules.
+
+.TP
+.B automation rules enable \fINAME\fR
+Enable an automation rule.
+
+.TP
+.B automation rules disable \fINAME\fR
+Disable an automation rule.
+
+.TP
+.B automation rules test \fINAME\fR
+Test if a rule would trigger in current context.
+
+.SS System
+.TP
+.B status
+Display comprehensive system status.
+
+.TP
+.B daemon start
+Start the Legion Toolkit daemon.
+
+.TP
+.B daemon stop
+Stop the Legion Toolkit daemon.
+
+.TP
+.B daemon restart
+Restart the Legion Toolkit daemon.
+
+.TP
+.B daemon status
+Check daemon status.
+
+.SH EXAMPLES
+.TP
+Set power mode to performance:
+.B legion-toolkit power set performance
+
+.TP
+Set battery charge limit to 80%:
+.B legion-toolkit battery charge-limit 80
+
+.TP
+Set RGB keyboard to red:
+.B legion-toolkit rgb static 255 0 0
+
+.TP
+Monitor temperatures:
+.B legion-toolkit thermal monitor
+
+.TP
+Apply an automation profile:
+.B legion-toolkit automation profiles apply "Gaming"
+
+.TP
+Get full system status in JSON format:
+.B legion-toolkit status --json
+
+.SH FILES
+.TP
+.I /opt/legion-toolkit/
+Installation directory
+
+.TP
+.I ~/.config/legion-toolkit/
+User configuration directory
+
+.TP
+.I ~/.config/legion-toolkit/settings.json
+User settings file
+
+.TP
+.I ~/.config/legion-toolkit/automation.json
+Automation profiles and rules
+
+.TP
+.I /var/log/legion-toolkit/
+Log files directory
+
+.TP
+.I /run/legion-toolkit.sock
+Unix domain socket for IPC
+
+.TP
+.I /lib/systemd/system/legion-toolkit.service
+User systemd service file
+
+.TP
+.I /lib/systemd/system/legion-toolkit-system.service
+System systemd service file
+
+.SH KERNEL MODULE
+Legion Toolkit requires the \fBlegion-laptop\fR kernel module for full functionality.
+The module provides access to:
+
+.RS
+.IP \(bu 2
+Power mode control
+.IP \(bu 2
+Fan control
+.IP \(bu 2
+Battery conservation mode
+.IP \(bu 2
+Keyboard backlight control
+.IP \(bu 2
+Special Fn+Q key combinations
+.RE
+
+To check if the module is loaded:
+.RS
+.B lsmod | grep legion_laptop
+.RE
+
+To load the module:
+.RS
+.B sudo modprobe legion-laptop
+.RE
+
+.SH ENVIRONMENT
+.TP
+.B LEGION_TOOLKIT_LOG_LEVEL
+Set logging level (DEBUG, INFO, WARNING, ERROR). Default: INFO
+
+.TP
+.B LEGION_TOOLKIT_CONFIG_DIR
+Override configuration directory location.
+
+.TP
+.B LEGION_TOOLKIT_NO_DAEMON
+Disable automatic daemon connection.
+
+.SH EXIT STATUS
+.TP
+.B 0
+Successful execution
+
+.TP
+.B 1
+General error
+
+.TP
+.B 2
+Invalid command or arguments
+
+.TP
+.B 3
+Permission denied
+
+.TP
+.B 4
+Daemon not running
+
+.TP
+.B 5
+Hardware not supported
+
+.TP
+.B 10
+Kernel module not loaded
+
+.SH BUGS
+Report bugs at: https://github.com/LenovoLegion/LegionToolkit/issues
+
+.SH AUTHOR
+Legion Toolkit Team
+
+.SH COPYRIGHT
+Copyright © 2025 Legion Toolkit Team. License: MIT
+
+.SH SEE ALSO
+.BR systemctl (1),
+.BR modprobe (8),
+.BR ddcutil (1),
+.BR xrandr (1)
+
+Full documentation: https://github.com/LenovoLegion/LegionToolkit/wiki

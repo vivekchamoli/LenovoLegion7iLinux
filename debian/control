@@ -1,0 +1,43 @@
+Source: legion-toolkit
+Section: utils
+Priority: optional
+Maintainer: Vivek Chamoli <vivekchamoli@github.com>
+Build-Depends: debhelper (>= 10),
+               dotnet-sdk-8.0,
+               libx11-dev,
+               libxrandr-dev,
+               libxi-dev
+Standards-Version: 4.5.1
+Homepage: https://github.com/vivekchamoli/LenovoLegion7i
+Vcs-Browser: https://github.com/vivekchamoli/LenovoLegion7i
+Vcs-Git: https://github.com/vivekchamoli/LenovoLegion7i.git
+
+Package: legion-toolkit
+Architecture: amd64
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         dotnet-runtime-8.0,
+         libx11-6,
+         libxrandr2,
+         libxi6,
+         libnotify-bin,
+         x11-utils,
+         ddcutil,
+         redshift
+Recommends: legion-laptop-dkms
+Suggests: nvidia-settings
+Description: Comprehensive control utility for Lenovo Legion laptops
+ Legion Toolkit provides a graphical and command-line interface for
+ controlling various hardware features of Lenovo Legion laptops on Linux.
+ .
+ Features:
+  - Power mode control (Quiet, Balanced, Performance)
+  - Battery management (charge limits, conservation mode)
+  - Thermal monitoring and fan control
+  - RGB keyboard lighting control
+  - Display refresh rate and color management
+  - Automation profiles and rules
+  - System tray integration
+  - Comprehensive CLI support
+ .
+ This package requires the legion-laptop kernel module for full functionality.

@@ -1,0 +1,46 @@
+[Unit]
+Description=Legion Toolkit System Service - Hardware control daemon
+Documentation=https://github.com/LenovoLegion/LegionToolkit
+After=multi-user.target
+Wants=multi-user.target
+
+[Service]
+Type=forking
+PIDFile=/run/legion-toolkit.pid
+ExecStart=/opt/legion-toolkit/LenovoLegionToolkit.Avalonia --system-daemon
+ExecStop=/bin/kill -TERM $MAINPID
+Restart=on-failure
+RestartSec=10
+
+# Run as dedicated user (created during installation)
+User=legion-toolkit
+Group=legion-toolkit
+
+# Capabilities for hardware access
+AmbientCapabilities=CAP_SYS_RAWIO CAP_DAC_READ_SEARCH
+CapabilityBoundingSet=CAP_SYS_RAWIO CAP_DAC_READ_SEARCH
+
+# Security settings
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/legion-toolkit /var/log/legion-toolkit
+NoNewPrivileges=false  # Needed for capabilities
+
+# Device access
+DeviceAllow=/dev/cpu/0/msr rw
+DeviceAllow=/dev/i2c-* rw
+DeviceAllow=/dev/mem r
+PrivateDevices=no
+
+# Resource limits
+MemoryLimit=256M
+CPUQuota=25%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=legion-toolkit-system
+
+[Install]
+WantedBy=multi-user.target

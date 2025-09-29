@@ -1,0 +1,16 @@
+legion-toolkit (1.0.0-1) unstable; urgency=medium
+
+  * Initial release for Linux
+  * Full feature parity with Windows version including:
+    - Power mode control (Quiet, Balanced, Performance, Custom)
+    - Battery management (charge limits, conservation mode, rapid charge)
+    - Thermal monitoring and fan control
+    - RGB keyboard lighting with effects
+    - Display refresh rate and color management
+    - Automation profiles and rules engine
+    - System tray integration
+    - Comprehensive CLI interface
+  * Support for legion-laptop kernel module
+  * Multi-distribution support (Debian, Ubuntu, Fedora, Arch)
+
+ -- Legion Toolkit Team <noreply@example.com>  Mon, 23 Sep 2025 00:00:00 +0000

@@ -1,0 +1,132 @@
+name: legion-toolkit
+base: core22
+version: '3.0.0'
+summary: Comprehensive control utility for Lenovo Legion laptops
+description: |
+  Legion Toolkit provides complete control over Lenovo Legion gaming laptops
+  on Linux, including power modes, battery management, RGB lighting, thermal
+  control, and more.
+
+  Features:
+  - Power mode management (Quiet, Balanced, Performance, Custom)
+  - Battery conservation and rapid charge control
+  - RGB keyboard control with effects
+  - Thermal monitoring and fan control
+  - GPU management and switching
+  - Display configuration (refresh rate, color profiles)
+  - Automation profiles and rules
+  - System tray integration
+  - Comprehensive CLI support
+
+grade: stable
+confinement: classic
+
+architectures:
+  - build-on: amd64
+
+apps:
+  legion-toolkit:
+    command: bin/legion-toolkit
+    environment:
+      DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: 1
+      DOTNET_ROOT: $SNAP/usr/share/dotnet
+    plugs:
+      - network
+      - network-bind
+      - home
+      - removable-media
+      - hardware-observe
+      - system-observe
+      - raw-usb
+      - kernel-module-observe
+      - x11
+      - unity7
+      - desktop
+      - desktop-legacy
+      - wayland
+
+  gui:
+    command: bin/legion-toolkit-gui
+    desktop: usr/share/applications/legion-toolkit.desktop
+    environment:
+      DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: 1
+      DOTNET_ROOT: $SNAP/usr/share/dotnet
+      AVALONIA_SCREEN_SCALE_FACTOR_OVERRIDE: 1
+    plugs:
+      - network
+      - network-bind
+      - home
+      - removable-media
+      - hardware-observe
+      - system-observe
+      - raw-usb
+      - kernel-module-observe
+      - x11
+      - unity7
+      - desktop
+      - desktop-legacy
+      - wayland
+      - opengl
+
+  daemon:
+    command: bin/legion-toolkit-daemon
+    daemon: simple
+    restart-condition: always
+    environment:
+      DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: 1
+    plugs:
+      - network
+      - network-bind
+      - hardware-observe
+      - system-observe
+      - raw-usb
+      - kernel-module-observe
+
+parts:
+  legion-toolkit:
+    plugin: dotnet
+    dotnet-build-configuration: Release
+    dotnet-self-contained-runtime-identifier: linux-x64
+    source: .
+    source-subdir: LenovoLegionToolkit.Avalonia
+    build-packages:
+      - dotnet-sdk-8.0
+      - libx11-dev
+      - libice-dev
+      - libsm-dev
+      - libfontconfig1-dev
+    stage-packages:
+      - libx11-6
+      - libice6
+      - libsm6
+      - libfontconfig1
+      - libssl3
+      - libicu70
+      - acpi
+      - pciutils
+      - usbutils
+      - lm-sensors
+
+  desktop-files:
+    plugin: dump
+    source: snap/gui
+    organize:
+      legion-toolkit.desktop: usr/share/applications/legion-toolkit.desktop
+      legion-toolkit.png: usr/share/icons/hicolor/256x256/apps/legion-toolkit.png
+
+  scripts:
+    plugin: dump
+    source: snap/local
+    organize:
+      legion-toolkit-gui: bin/legion-toolkit-gui
+      legion-toolkit-daemon: bin/legion-toolkit-daemon
+
+layout:
+  /sys:
+    bind: $HOST_SYS
+  /proc:
+    bind: $HOST_PROC
+  /dev:
+    bind: $HOST_DEV
+  /etc/legion-toolkit:
+    bind: $SNAP_USER_DATA

@@ -1,0 +1,82 @@
+# AppImage specification for Legion Toolkit
+# Used for automated AppImage builds
+
+app: legion-toolkit
+version: 1.0.0
+
+ingredients:
+  dist: ubuntu
+  release: jammy  # Ubuntu 22.04 LTS
+  sources:
+    - deb http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse
+  packages:
+    - dotnet-runtime-8.0
+    - libx11-6
+    - libxrandr2
+    - libxi6
+    - libxext6
+    - libxrender1
+    - libxcursor1
+    - libxfixes3
+    - libfreetype6
+    - libfontconfig1
+    - libnotify4
+    - libgtk-3-0
+
+script:
+  # Build the application
+  - cd /workspace
+  - dotnet restore
+  - |
+    dotnet publish LenovoLegionToolkit.Avalonia/LenovoLegionToolkit.Avalonia.csproj \
+      -c Release \
+      -r linux-x64 \
+      --self-contained true \
+      -p:PublishSingleFile=false \
+      -p:PublishTrimmed=false \
+      -o AppDir/usr/lib/legion-toolkit
+
+  # Create directories
+  - mkdir -p AppDir/usr/bin
+  - mkdir -p AppDir/usr/share/applications
+  - mkdir -p AppDir/usr/share/icons/hicolor/scalable/apps
+  - mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+
+  # Create launcher
+  - |
+    cat > AppDir/usr/bin/legion-toolkit << 'EOF'
+    #!/bin/bash
+    APPDIR="$(dirname "$(dirname "$(readlink -f "$0")")")"
+    export LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib/legion-toolkit:$LD_LIBRARY_PATH"
+    exec "$APPDIR/usr/lib/legion-toolkit/LenovoLegionToolkit.Avalonia" "$@"
+    EOF
+  - chmod +x AppDir/usr/bin/legion-toolkit
+
+  # Create desktop entry
+  - |
+    cat > AppDir/usr/share/applications/legion-toolkit.desktop << 'EOF'
+    [Desktop Entry]
+    Name=Legion Toolkit
+    Comment=Control utility for Lenovo Legion laptops
+    Exec=legion-toolkit
+    Icon=legion-toolkit
+    Terminal=false
+    Type=Application
+    Categories=System;Settings;HardwareSettings;
+    Keywords=legion;lenovo;laptop;hardware;rgb;power;battery;
+    EOF
+
+  # Copy resources
+  - cp Resources/legion-toolkit.svg AppDir/usr/share/icons/hicolor/scalable/apps/ || true
+  - cp Resources/legion-toolkit.png AppDir/usr/share/icons/hicolor/256x256/apps/ || true
+  - cp AppDir/usr/share/icons/hicolor/256x256/apps/legion-toolkit.png AppDir/ || true
+  - cp AppDir/usr/share/applications/legion-toolkit.desktop AppDir/
+
+  # Create AppRun
+  - |
+    cat > AppDir/AppRun << 'EOF'
+    #!/bin/bash
+    APPDIR="$(dirname "$(readlink -f "$0")")"
+    exec "$APPDIR/usr/bin/legion-toolkit" "$@"
+    EOF
+  - chmod +x AppDir/AppRun

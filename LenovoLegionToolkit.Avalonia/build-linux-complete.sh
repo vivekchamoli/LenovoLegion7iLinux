@@ -24,6 +24,10 @@ PACKAGE_NAME="legion-toolkit"
 MAINTAINER="Vivek Chamoli <vivekchamoli@outlook.com>"
 HOMEPAGE="https://github.com/vivekchamoli/LenovoLegion7iLinux"
 
+# Kernel module information
+KERNEL_MODULE_VERSION="2.0.0"
+KERNEL_MODULE_NAME="legion-laptop-enhanced"
+
 # Check if .NET 8 is installed
 if ! command -v dotnet &> /dev/null; then
     echo -e "${RED}❌ .NET 8 SDK is not installed. Please install it first:${NC}"
@@ -96,6 +100,165 @@ dotnet publish \
 chmod +x ./publish/linux-x64/LegionToolkit
 chmod +x ./publish/linux-arm64/LegionToolkit
 
+# Function to create DKMS package for enhanced kernel module
+create_dkms_package() {
+    local dkms_name="${KERNEL_MODULE_NAME}"
+    local dkms_version="${KERNEL_MODULE_VERSION}"
+
+    echo -e "      Creating DKMS package: ${dkms_name}-dkms_${dkms_version}"
+
+    # Create DKMS package structure
+    mkdir -p "./publish/dkms-package/${dkms_name}-dkms/DEBIAN"
+    mkdir -p "./publish/dkms-package/${dkms_name}-dkms/usr/src/${dkms_name}-${dkms_version}"
+    mkdir -p "./publish/dkms-package/${dkms_name}-dkms/usr/share/doc/${dkms_name}-dkms"
+
+    # Copy kernel module source files
+    if [ -d "../kernel-module" ]; then
+        cp -r ../kernel-module/* "./publish/dkms-package/${dkms_name}-dkms/usr/src/${dkms_name}-${dkms_version}/"
+    else
+        echo -e "${YELLOW}⚠️  Warning: Kernel module source not found at ../kernel-module${NC}"
+        echo -e "   DKMS package will be created without kernel module source"
+        return 1
+    fi
+
+    # Create DKMS control file
+    cat > "./publish/dkms-package/${dkms_name}-dkms/DEBIAN/control" << EOF
+Package: ${dkms_name}-dkms
+Version: ${dkms_version}
+Section: kernel
+Priority: optional
+Architecture: all
+Depends: dkms (>= 2.1.0.0), build-essential, linux-headers-generic | linux-headers-amd64
+Maintainer: ${MAINTAINER}
+Description: Enhanced Legion laptop kernel module (DKMS)
+ Enhanced kernel module for Lenovo Legion laptops with backward compatibility
+ for kernel versions 5.4+ to 6.8+. Provides comprehensive hardware control
+ including thermal management, RGB lighting, battery control, and power modes.
+ .
+ This package provides the source code for the legion-laptop-enhanced kernel
+ module to be built with dkms.
+ .
+ Features:
+  - Universal Legion Gen 6-9 support
+  - Backward compatibility for multiple kernel versions
+  - Enhanced thermal management and monitoring
+  - Comprehensive sysfs interface
+  - Improved error handling and debugging
+Homepage: ${HOMEPAGE}
+EOF
+
+    # Create DKMS postinst script
+    cat > "./publish/dkms-package/${dkms_name}-dkms/DEBIAN/postinst" << 'EOF'
+#!/bin/bash
+set -e
+
+DKMS_NAME="legion-laptop-enhanced"
+DKMS_VERSION="2.0.0"
+
+echo "Setting up Enhanced Legion DKMS module..."
+
+# Add to DKMS tree
+dkms add -m $DKMS_NAME -v $DKMS_VERSION
+
+# Build and install for current kernel
+CURRENT_KERNEL=$(uname -r)
+echo "Building module for kernel $CURRENT_KERNEL..."
+
+if dkms build -m $DKMS_NAME -v $DKMS_VERSION; then
+    echo "✅ Module built successfully"
+
+    if dkms install -m $DKMS_NAME -v $DKMS_VERSION; then
+        echo "✅ Module installed successfully"
+
+        # Try to load the module
+        if modprobe legion_laptop_enhanced; then
+            echo "✅ Enhanced Legion module loaded successfully"
+        else
+            echo "⚠️  Module installed but could not be loaded immediately"
+            echo "   Try 'sudo modprobe legion_laptop_enhanced' or reboot"
+        fi
+    else
+        echo "❌ Failed to install module"
+        exit 1
+    fi
+else
+    echo "❌ Failed to build module"
+    echo "Please ensure kernel headers are installed:"
+    echo "  Ubuntu/Debian: sudo apt install linux-headers-$(uname -r)"
+    echo "  Fedora: sudo dnf install kernel-devel-$(uname -r)"
+    echo "  Arch: sudo pacman -S linux-headers"
+    exit 1
+fi
+
+echo ""
+echo "Enhanced Legion DKMS module installation completed!"
+echo "The module will be automatically rebuilt for future kernel updates."
+EOF
+
+    # Create DKMS prerm script
+    cat > "./publish/dkms-package/${dkms_name}-dkms/DEBIAN/prerm" << 'EOF'
+#!/bin/bash
+set -e
+
+DKMS_NAME="legion-laptop-enhanced"
+DKMS_VERSION="2.0.0"
+
+echo "Removing Enhanced Legion DKMS module..."
+
+# Remove from all kernels
+dkms remove -m $DKMS_NAME -v $DKMS_VERSION --all || true
+
+echo "Enhanced Legion DKMS module removed."
+EOF
+
+    # Make scripts executable
+    chmod 755 "./publish/dkms-package/${dkms_name}-dkms/DEBIAN/postinst"
+    chmod 755 "./publish/dkms-package/${dkms_name}-dkms/DEBIAN/prerm"
+
+    # Create documentation
+    cat > "./publish/dkms-package/${dkms_name}-dkms/usr/share/doc/${dkms_name}-dkms/README" << EOF
+Enhanced Legion Laptop Kernel Module
+===================================
+
+This package provides the enhanced legion-laptop kernel module with DKMS support.
+
+Installation
+------------
+This module is automatically built and installed by DKMS when the package is installed.
+
+Manual Operations
+-----------------
+- Build: sudo dkms build -m legion-laptop-enhanced -v 2.0.0
+- Install: sudo dkms install -m legion-laptop-enhanced -v 2.0.0
+- Remove: sudo dkms remove -m legion-laptop-enhanced -v 2.0.0 --all
+- Status: dkms status legion-laptop-enhanced
+
+Loading the Module
+------------------
+sudo modprobe legion_laptop_enhanced
+
+Module Parameters
+-----------------
+- debug=1: Enable debug output
+- force_load=1: Force loading on unknown models
+
+Compatibility
+-------------
+Supports kernel versions 5.4+ to 6.8+ with automatic compatibility detection.
+
+For more information, visit: ${HOMEPAGE}
+EOF
+
+    # Build DKMS .deb package
+    echo -e "      Building DKMS .deb package..."
+    cd "./publish/dkms-package"
+    dpkg-deb --build "${dkms_name}-dkms"
+    mv "${dkms_name}-dkms.deb" "../${dkms_name}-dkms_${dkms_version}_all.deb"
+    cd "../.."
+
+    echo -e "      ✅ DKMS package created: ${dkms_name}-dkms_${dkms_version}_all.deb"
+}
+
 echo ""
 echo -e "${PURPLE}📁 Creating installation packages...${NC}"
 
@@ -118,8 +281,8 @@ Section: utils
 Priority: optional
 Architecture: amd64
 Depends: libc6 (>= 2.31), libicu70 | libicu72, libssl3, libx11-6, libfontconfig1, libharfbuzz0b, libfreetype6
-Recommends: acpi-support, udev
-Suggests: linux-modules-extra
+Recommends: acpi-support, udev, legion-laptop-enhanced-dkms
+Suggests: linux-modules-extra, linux-headers-generic
 Maintainer: ${MAINTAINER}
 Description: System management tool for Lenovo Legion laptops
  A comprehensive system management application for Lenovo Legion laptops
@@ -158,9 +321,16 @@ if [ -x "$(command -v udevadm)" ]; then
     udevadm trigger 2>/dev/null || true
 fi
 
-# Try to load legion-laptop module if available
+# Try to load enhanced legion-laptop module if available, fallback to standard module
 if [ -x "$(command -v modprobe)" ]; then
-    modprobe legion-laptop 2>/dev/null || echo "Note: legion-laptop module not available. Some features may be limited."
+    if modprobe legion_laptop_enhanced 2>/dev/null; then
+        echo "✅ Enhanced Legion kernel module loaded successfully"
+    elif modprobe legion-laptop 2>/dev/null; then
+        echo "✅ Standard Legion kernel module loaded"
+    else
+        echo "⚠️  Note: No Legion kernel module available. Hardware control will be limited."
+        echo "   Install legion-laptop-enhanced-dkms package for full functionality."
+    fi
 fi
 
 # Set up systemd service if systemd is available
@@ -505,6 +675,10 @@ cd ./publish/debian-package
 dpkg-deb --build ${PACKAGE_NAME}
 mv ${PACKAGE_NAME}.deb ../${PACKAGE_NAME}_${VERSION}_amd64.deb
 cd ../..
+
+# Create Enhanced Legion Kernel Module DKMS Package
+echo -e "   ${CYAN}🔧 Creating DKMS kernel module package...${NC}"
+create_dkms_package
 
 # Create RPM spec file
 echo -e "   ${CYAN}📦 Creating RPM package...${NC}"
@@ -922,6 +1096,7 @@ echo -e "${PURPLE}📁 Output files:${NC}"
 echo "   • Linux x64 binary: ./publish/linux-x64/LegionToolkit"
 echo "   • Linux ARM64 binary: ./publish/linux-arm64/LegionToolkit"
 echo "   • Debian package: ./publish/legion-toolkit_${VERSION}_amd64.deb"
+echo "   • DKMS kernel module: ./publish/legion-laptop-enhanced-dkms_${KERNEL_MODULE_VERSION}_all.deb"
 echo "   • System installer: ./publish/install-system.sh"
 echo "   • System uninstaller: ./publish/uninstall-system.sh"
 echo "   • Test runner: ./publish/test-binary.sh"
@@ -933,10 +1108,12 @@ echo -e "${CYAN}📋 Installation Options:${NC}"
 echo "   1. Quick test: cd publish && ./test-binary.sh"
 echo "   2. System install: cd publish && sudo ./install-system.sh"
 echo "   3. Debian package: cd publish && sudo dpkg -i legion-toolkit_${VERSION}_amd64.deb"
+echo "   4. DKMS kernel module: cd publish && sudo dpkg -i legion-laptop-enhanced-dkms_${KERNEL_MODULE_VERSION}_all.deb"
 echo ""
 echo -e "${YELLOW}⚠️  Important Notes:${NC}"
 echo "   • Add user to 'legion' group after installation"
-echo "   • Legion kernel module recommended for full functionality"
+echo "   • Install DKMS kernel module for full hardware control"
+echo "   • Enhanced kernel module supports Legion Gen 6-9 with backward compatibility"
 echo "   • Some features require hardware access permissions"
 echo "   • Log out/in required after group membership changes"
 echo ""

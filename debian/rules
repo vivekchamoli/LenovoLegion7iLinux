@@ -1,0 +1,55 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export DOTNET_CLI_TELEMETRY_OPTOUT = 1
+export DOTNET_SKIP_FIRST_TIME_EXPERIENCE = 1
+
+%:
+	dh $@
+
+override_dh_auto_clean:
+	rm -rf bin obj
+	rm -rf LenovoLegionToolkit.Avalonia/bin LenovoLegionToolkit.Avalonia/obj
+
+override_dh_auto_build:
+	dotnet restore
+	dotnet publish LenovoLegionToolkit.Avalonia/LenovoLegionToolkit.Avalonia.csproj \
+		-c Release \
+		-r linux-x64 \
+		--self-contained false \
+		-o debian/legion-toolkit/opt/legion-toolkit
+
+override_dh_auto_install:
+	# Create directories
+	mkdir -p debian/legion-toolkit/usr/bin
+	mkdir -p debian/legion-toolkit/usr/share/applications
+	mkdir -p debian/legion-toolkit/usr/share/icons/hicolor/scalable/apps
+	mkdir -p debian/legion-toolkit/usr/share/man/man1
+	mkdir -p debian/legion-toolkit/lib/systemd/system
+	mkdir -p debian/legion-toolkit/etc/legion-toolkit
+
+	# Install binary symlink
+	ln -sf /opt/legion-toolkit/LenovoLegionToolkit.Avalonia debian/legion-toolkit/usr/bin/legion-toolkit
+
+	# Install desktop file
+	cp Resources/legion-toolkit.desktop debian/legion-toolkit/usr/share/applications/
+
+	# Install icon
+	cp Resources/legion-toolkit.svg debian/legion-toolkit/usr/share/icons/hicolor/scalable/apps/
+
+	# Install systemd services
+	cp Scripts/legion-toolkit.service debian/legion-toolkit/lib/systemd/system/
+	cp Scripts/legion-toolkit-system.service debian/legion-toolkit/lib/systemd/system/
+
+	# Install man page
+	cp Documentation/legion-toolkit.1 debian/legion-toolkit/usr/share/man/man1/ || true
+
+	# Set permissions
+	chmod +x debian/legion-toolkit/opt/legion-toolkit/LenovoLegionToolkit.Avalonia
+	chmod 644 debian/legion-toolkit/lib/systemd/system/*.service
+
+override_dh_shlibdeps:
+	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
+
+override_dh_strip:
+	# Don't strip .NET assemblies

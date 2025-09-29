@@ -1,0 +1,20 @@
+Package: legion-toolkit-test
+Version: 6.0.0-test
+Architecture: amd64
+Maintainer: Test Build <test@legion-toolkit.org>
+Depends: python3 (>= 3.8), python3-gi, python3-psutil, acpi, lm-sensors
+Recommends: ddcutil, redshift
+Section: utils
+Priority: optional
+Homepage: https://github.com/vivekchamoli/LenovoLegion7i
+Description: Legion Toolkit test package for Ubuntu
+ This is a test package for Legion Toolkit, providing basic hardware
+ control and monitoring capabilities for Lenovo Legion laptops.
+ .
+ This test version includes:
+  - Basic system information gathering
+  - Power mode detection
+  - Temperature monitoring
+  - Simple GUI interface
+ .
+ Note: This is a test package for evaluation purposes.

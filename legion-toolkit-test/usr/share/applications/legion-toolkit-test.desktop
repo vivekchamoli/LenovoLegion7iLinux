@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Legion Toolkit Test
+GenericName=Legion Hardware Monitor
+Comment=Test application for Legion Toolkit Ubuntu package
+Icon=legion-toolkit-test
+Exec=legion-toolkit-test --gui
+Terminal=false
+Type=Application
+Categories=System;Monitor;HardwareSettings;
+Keywords=legion;lenovo;laptop;hardware;temperature;fan;
+StartupNotify=true
+X-FullName=Legion Toolkit Test Application

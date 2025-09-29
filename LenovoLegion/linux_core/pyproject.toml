@@ -1,0 +1,190 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel", "build"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "legion-toolkit-linux"
+version = "6.0.0"
+description = "Legion Toolkit Linux - Advanced hardware control for Legion laptops"
+readme = "README.md"
+license = {text = "GPL-3.0"}
+authors = [
+    {name = "Vivek Chamoli", email = "vivek@legion-toolkit.org"}
+]
+maintainers = [
+    {name = "Legion Toolkit Team", email = "team@legion-toolkit.org"}
+]
+keywords = ["legion", "laptop", "hardware", "thermal", "gaming", "lenovo"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Hardware",
+    "Topic :: System :: Monitoring",
+    "Topic :: Utilities",
+    "Environment :: X11 Applications :: GTK",
+]
+requires-python = ">=3.8"
+dependencies = [
+    # Core dependencies
+    "asyncio-mqtt>=0.11.0",
+    "numpy>=1.21.0",
+    "psutil>=5.8.0",
+
+    # AI/ML dependencies
+    "torch>=1.12.0",
+    "torchvision>=0.13.0",
+    "scikit-learn>=1.1.0",
+    "pandas>=1.4.0",
+
+    # GUI dependencies
+    "PyGObject>=3.42.0",
+    "pycairo>=1.20.0",
+
+    # Web/API dependencies
+    "aiohttp>=3.8.0",
+    "websockets>=10.0",
+    "fastapi>=0.95.0",
+    "uvicorn>=0.20.0",
+
+    # System integration
+    "dbus-python>=1.2.18",
+    "systemd-python>=235",
+
+    # Hardware control
+    "py-cpuinfo>=8.0.0",
+    "nvidia-ml-py>=11.495.46",
+
+    # Configuration and serialization
+    "PyYAML>=6.0",
+    "toml>=0.10.2",
+    "jsonschema>=4.0.0",
+
+    # Utilities
+    "click>=8.0.0",
+    "rich>=12.0.0",
+    "tabulate>=0.9.0",
+    "humanize>=4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.20.0",
+    "pytest-cov>=4.0.0",
+    "black>=22.0.0",
+    "isort>=5.10.0",
+    "flake8>=5.0.0",
+    "mypy>=0.990",
+    "pre-commit>=2.20.0",
+]
+docs = [
+    "mkdocs>=1.4.0",
+    "mkdocs-material>=8.5.0",
+    "mkdocs-mermaid2-plugin>=0.6.0",
+]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.20.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.8.0",
+    "pytest-xdist>=3.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/vivekchamoli/LenovoLegion7i"
+Repository = "https://github.com/vivekchamoli/LenovoLegion7i.git"
+Documentation = "https://github.com/vivekchamoli/LenovoLegion7i/blob/main/README.md"
+"Bug Tracker" = "https://github.com/vivekchamoli/LenovoLegion7i/issues"
+Changelog = "https://github.com/vivekchamoli/LenovoLegion7i/blob/main/CHANGELOG.md"
+
+[project.scripts]
+legion-toolkit = "legion_toolkit.cli.main:main"
+legion-gui = "legion_toolkit.gui.main:main"
+legion-ai-optimizer = "legion_toolkit.ai.optimizer:main"
+legion-hardware-test = "legion_toolkit.hardware.test:main"
+
+[project.gui-scripts]
+legion-toolkit-gui = "legion_toolkit.gui.main:main"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["legion_toolkit*"]
+exclude = ["tests*", "docs*", "build*", "dist*"]
+
+[tool.setuptools.package-data]
+"legion_toolkit.gui" = ["*.ui", "*.css", "*.png", "*.svg", "*.gresource"]
+"legion_toolkit.kernel_module" = ["*.c", "*.h", "Makefile", "dkms.conf"]
+"legion_toolkit.data" = ["*.json", "*.yaml", "*.conf"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["legion_toolkit"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "hardware: marks tests that require actual hardware",
+    "root: marks tests that require root privileges",
+    "gpu: marks tests that require NVIDIA GPU",
+]
+
+[tool.coverage.run]
+source = ["legion_toolkit"]
+omit = ["*/tests/*", "*/test_*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]

@@ -1,0 +1,35 @@
+[Unit]
+Description=Legion Toolkit - Control panel for Lenovo Legion laptops
+Documentation=https://github.com/LenovoLegion/LegionToolkit
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/opt/legion-toolkit/LenovoLegionToolkit.Avalonia --daemon
+Restart=on-failure
+RestartSec=10
+
+# Security settings
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.config/legion-toolkit %h/.local/share/legion-toolkit
+NoNewPrivileges=true
+
+# Resource limits
+MemoryLimit=512M
+CPUQuota=50%
+
+# Environment
+Environment="DISPLAY=:0"
+Environment="WAYLAND_DISPLAY=wayland-0"
+Environment="XDG_RUNTIME_DIR=/run/user/%U"
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=legion-toolkit
+
+[Install]
+WantedBy=default.target
