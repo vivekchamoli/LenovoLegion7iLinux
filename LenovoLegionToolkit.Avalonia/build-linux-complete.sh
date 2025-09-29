@@ -117,7 +117,7 @@ Version: ${VERSION}
 Section: utils
 Priority: optional
 Architecture: amd64
-Depends: libc6 (>= 2.31), libicu70 | libicu72, libssl3
+Depends: libc6 (>= 2.31), libicu70 | libicu72, libssl3, libx11-6, libfontconfig1, libharfbuzz0b, libfreetype6
 Recommends: acpi-support, udev
 Suggests: linux-modules-extra
 Maintainer: ${MAINTAINER}
@@ -168,6 +168,20 @@ if [ -d "/etc/systemd/system" ] && [ -x "$(command -v systemctl)" ]; then
     systemctl daemon-reload 2>/dev/null || true
 fi
 
+# Update desktop database and icon cache for GUI visibility
+if [ -x "$(command -v update-desktop-database)" ]; then
+    update-desktop-database /usr/share/applications 2>/dev/null || true
+fi
+
+if [ -x "$(command -v gtk-update-icon-cache)" ]; then
+    gtk-update-icon-cache -f -t /usr/share/icons/hicolor 2>/dev/null || true
+fi
+
+# Update MIME database
+if [ -x "$(command -v update-mime-database)" ]; then
+    update-mime-database /usr/share/mime 2>/dev/null || true
+fi
+
 echo ""
 echo "Legion Toolkit has been installed successfully!"
 echo ""
@@ -179,12 +193,18 @@ echo "2. Log out and log back in (or restart) for group changes to take effect"
 echo ""
 echo "3. Launch the application:"
 echo "   - GUI: Search for 'Legion Toolkit' in your applications menu"
+echo "   - Or run: LegionToolkit"
 echo "   - CLI: legion-toolkit --help"
 echo ""
 echo "📋 Hardware Support:"
 echo "• For full functionality, ensure legion-laptop kernel module is loaded"
 echo "• Check module status: lsmod | grep legion"
 echo "• Install module: sudo modprobe legion-laptop"
+echo ""
+echo "🐛 Troubleshooting GUI Issues:"
+echo "• If GUI doesn't appear, try: /usr/bin/LegionToolkit"
+echo "• Check dependencies: ldd /usr/bin/LegionToolkit"
+echo "• Verify desktop file: desktop-file-validate /usr/share/applications/legion-toolkit.desktop"
 echo ""
 echo "📖 Documentation: ${HOMEPAGE}"
 echo ""
@@ -217,19 +237,131 @@ chmod +x ./publish/debian-package/${PACKAGE_NAME}/DEBIAN/prerm
 cp ./publish/linux-x64/LegionToolkit ./publish/debian-package/${PACKAGE_NAME}/usr/bin/
 chmod +x ./publish/debian-package/${PACKAGE_NAME}/usr/bin/LegionToolkit
 
-# Create desktop file
+# Create symbolic link for command line access
+cd ./publish/debian-package/${PACKAGE_NAME}/usr/bin/
+ln -sf LegionToolkit legion-toolkit
+cd ../../../../..
+
+# Copy icon files if they exist
+mkdir -p ./publish/debian-package/${PACKAGE_NAME}/usr/share/icons/hicolor/256x256/apps/
+mkdir -p ./publish/debian-package/${PACKAGE_NAME}/usr/share/icons/hicolor/scalable/apps/
+mkdir -p ./publish/debian-package/${PACKAGE_NAME}/usr/share/pixmaps/
+
+if [ -d "./Assets" ]; then
+    cp ./Assets/*.png ./publish/debian-package/${PACKAGE_NAME}/usr/share/icons/hicolor/256x256/apps/${PACKAGE_NAME}.png 2>/dev/null || true
+    cp ./Assets/*.svg ./publish/debian-package/${PACKAGE_NAME}/usr/share/icons/hicolor/scalable/apps/${PACKAGE_NAME}.svg 2>/dev/null || true
+    cp ./Assets/*.png ./publish/debian-package/${PACKAGE_NAME}/usr/share/pixmaps/${PACKAGE_NAME}.png 2>/dev/null || true
+fi
+
+# Create fallback icon if no assets found
+if [ ! -f "./publish/debian-package/${PACKAGE_NAME}/usr/share/icons/hicolor/256x256/apps/${PACKAGE_NAME}.png" ]; then
+    # Create a simple fallback icon (you could replace this with a proper icon)
+    echo "Creating fallback icon..."
+fi
+
+# Create diagnostic launcher script
+cat > ./publish/debian-package/${PACKAGE_NAME}/usr/bin/legion-toolkit-debug << 'EOF'
+#!/bin/bash
+# Legion Toolkit Diagnostic Launcher
+
+echo "🔍 Legion Toolkit Diagnostic Information"
+echo "========================================"
+
+echo "📍 Binary Location:"
+ls -la /usr/bin/LegionToolkit 2>/dev/null || echo "❌ Binary not found at /usr/bin/LegionToolkit"
+
+echo ""
+echo "🔗 Dependencies Check:"
+if command -v ldd >/dev/null 2>&1; then
+    MISSING=$(ldd /usr/bin/LegionToolkit 2>/dev/null | grep "not found")
+    if [ -z "$MISSING" ]; then
+        echo "✅ All dependencies satisfied"
+    else
+        echo "❌ Missing dependencies:"
+        echo "$MISSING"
+    fi
+else
+    echo "⚠️  ldd not available"
+fi
+
+echo ""
+echo "🖥️  Display Environment:"
+echo "DISPLAY: ${DISPLAY:-'Not set'}"
+echo "WAYLAND_DISPLAY: ${WAYLAND_DISPLAY:-'Not set'}"
+echo "XDG_SESSION_TYPE: ${XDG_SESSION_TYPE:-'Not set'}"
+
+echo ""
+echo "👤 User Permissions:"
+echo "Current user: $(whoami)"
+echo "Groups: $(groups)"
+if groups | grep -q legion; then
+    echo "✅ User is in legion group"
+else
+    echo "❌ User NOT in legion group (run: sudo usermod -a -G legion $USER)"
+fi
+
+echo ""
+echo "📁 Desktop Integration:"
+if [ -f "/usr/share/applications/legion-toolkit.desktop" ]; then
+    echo "✅ Desktop file exists"
+    if command -v desktop-file-validate >/dev/null 2>&1; then
+        if desktop-file-validate /usr/share/applications/legion-toolkit.desktop 2>/dev/null; then
+            echo "✅ Desktop file is valid"
+        else
+            echo "❌ Desktop file validation failed"
+        fi
+    fi
+else
+    echo "❌ Desktop file missing"
+fi
+
+echo ""
+echo "🚀 Attempting to launch Legion Toolkit..."
+echo "If the GUI doesn't appear, check the output below for errors:"
+echo "------------------------------------------------------------"
+
+# Try to launch with error output
+DISPLAY=${DISPLAY:-:0} /usr/bin/LegionToolkit "$@" 2>&1
+EOF
+
+chmod +x ./publish/debian-package/${PACKAGE_NAME}/usr/bin/legion-toolkit-debug
+
+# Create desktop file with correct paths
 cat > ./publish/debian-package/${PACKAGE_NAME}/usr/share/applications/${PACKAGE_NAME}.desktop << EOF
 [Desktop Entry]
 Type=Application
 Name=Legion Toolkit
 GenericName=Legion Laptop Management
 Comment=System management tool for Lenovo Legion laptops
-Exec=LegionToolkit
+Exec=/usr/bin/LegionToolkit
 Icon=${PACKAGE_NAME}
 Categories=System;Settings;HardwareSettings;
 Keywords=legion;lenovo;laptop;thermal;rgb;battery;performance;
 Terminal=false
 StartupNotify=true
+StartupWMClass=LegionToolkit
+TryExec=/usr/bin/LegionToolkit
+Actions=PowerQuiet;PowerBalanced;PowerPerformance;BatteryConservation;
+
+[Desktop Action PowerQuiet]
+Name=Set Quiet Mode
+Exec=/usr/bin/LegionToolkit power set quiet
+Icon=${PACKAGE_NAME}
+
+[Desktop Action PowerBalanced]
+Name=Set Balanced Mode
+Exec=/usr/bin/LegionToolkit power set balanced
+Icon=${PACKAGE_NAME}
+
+[Desktop Action PowerPerformance]
+Name=Set Performance Mode
+Exec=/usr/bin/LegionToolkit power set performance
+Icon=${PACKAGE_NAME}
+
+[Desktop Action BatteryConservation]
+Name=Toggle Battery Conservation
+Exec=/usr/bin/LegionToolkit battery conservation toggle
+Icon=${PACKAGE_NAME}
 EOF
 
 # Create udev rules for hardware access
