@@ -119,7 +119,7 @@ Priority: optional
 Architecture: amd64
 Depends: libc6 (>= 2.31), libicu70 | libicu72, libssl3
 Recommends: acpi-support, udev
-Suggests: linux-modules-extra-\$(uname -r)
+Suggests: linux-modules-extra
 Maintainer: ${MAINTAINER}
 Description: System management tool for Lenovo Legion laptops
  A comprehensive system management application for Lenovo Legion laptops
