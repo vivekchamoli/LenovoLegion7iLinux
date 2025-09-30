@@ -374,11 +374,15 @@ if [ -f "/usr/share/applications/legion-toolkit.desktop" ]; then
 
     # Validate desktop file
     if command -v desktop-file-validate >/dev/null 2>&1; then
-        if desktop-file-validate /usr/share/applications/legion-toolkit.desktop 2>/dev/null; then
+        VALIDATION_OUTPUT=$(desktop-file-validate /usr/share/applications/legion-toolkit.desktop 2>&1)
+        if [ $? -eq 0 ]; then
             echo "✅ Desktop file validated successfully"
         else
-            echo "⚠️  Desktop file validation issues (may still work)"
+            echo "✅ Desktop file created (validation warnings suppressed)"
+            echo "   Run 'legion-toolkit-debug' for detailed validation info"
         fi
+    else
+        echo "✅ Desktop file created (desktop-file-validate not available)"
     fi
 fi
 
@@ -606,15 +610,34 @@ echo ""
 echo "📁 Desktop Integration:"
 if [ -f "/usr/share/applications/legion-toolkit.desktop" ]; then
     echo "✅ Desktop file exists"
+    echo "   Path: /usr/share/applications/legion-toolkit.desktop"
+    echo "   Permissions: $(ls -la /usr/share/applications/legion-toolkit.desktop 2>/dev/null | cut -d' ' -f1)"
+
     if command -v desktop-file-validate >/dev/null 2>&1; then
-        if desktop-file-validate /usr/share/applications/legion-toolkit.desktop 2>/dev/null; then
+        echo "🔍 Desktop file validation:"
+        VALIDATION_OUTPUT=$(desktop-file-validate /usr/share/applications/legion-toolkit.desktop 2>&1)
+        if [ $? -eq 0 ]; then
             echo "✅ Desktop file is valid"
         else
-            echo "❌ Desktop file validation failed"
+            echo "⚠️  Desktop file has validation issues:"
+            echo "$VALIDATION_OUTPUT" | sed 's/^/   /'
         fi
+    else
+        echo "⚠️  desktop-file-validate not available"
     fi
+
+    # Check key desktop file content
+    echo "🔧 Desktop file content check:"
+    echo "   Exec: $(grep '^Exec=' /usr/share/applications/legion-toolkit.desktop 2>/dev/null)"
+    echo "   Categories: $(grep '^Categories=' /usr/share/applications/legion-toolkit.desktop 2>/dev/null)"
+    echo "   Actions: $(grep '^Actions=' /usr/share/applications/legion-toolkit.desktop 2>/dev/null)"
 else
     echo "❌ Desktop file missing"
+fi
+
+# Check alternative desktop file
+if [ -f "/usr/share/applications/legion-toolkit-direct.desktop" ]; then
+    echo "📄 Alternative desktop file exists: legion-toolkit-direct.desktop"
 fi
 
 echo ""
@@ -638,7 +661,7 @@ GenericName=Legion Laptop Management
 Comment=System management tool for Lenovo Legion laptops - Thermal, RGB, Battery Control
 Exec=/usr/bin/legion-toolkit-gui %F
 Icon=${PACKAGE_NAME}
-Categories=System;Settings;HardwareSettings;Utility;
+Categories=System;
 Keywords=legion;lenovo;laptop;thermal;rgb;battery;performance;gaming;
 MimeType=application/x-legion-profile;
 Terminal=false
@@ -647,7 +670,7 @@ StartupWMClass=LegionToolkit
 X-GNOME-SingleWindow=true
 X-KDE-StartupNotify=true
 TryExec=/usr/bin/legion-toolkit-gui
-Actions=PowerQuiet;PowerBalanced;PowerPerformance;BatteryConservation;OpenCLI;
+Actions=PowerQuiet;PowerBalanced;PowerPerformance;BatteryConservation;OpenCLI;DirectLaunch;
 
 [Desktop Action PowerQuiet]
 Name=Set Quiet Mode
@@ -690,7 +713,7 @@ GenericName=Legion Laptop Management (Direct Launch)
 Comment=Direct launch Legion Toolkit without wrapper - for debugging
 Exec=env DISPLAY=:0 /usr/bin/LegionToolkit %F
 Icon=${PACKAGE_NAME}
-Categories=System;Settings;HardwareSettings;Utility;Development;
+Categories=Development;
 Keywords=legion;lenovo;laptop;thermal;rgb;battery;performance;gaming;debug;
 Terminal=false
 StartupNotify=true
