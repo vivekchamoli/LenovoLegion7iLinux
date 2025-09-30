@@ -280,8 +280,8 @@ Version: ${VERSION}
 Section: utils
 Priority: optional
 Architecture: amd64
-Depends: libc6 (>= 2.31), libicu70 | libicu72, libssl3, libx11-6, libfontconfig1, libharfbuzz0b, libfreetype6
-Recommends: acpi-support, udev, legion-laptop-enhanced-dkms
+Depends: libc6 (>= 2.31), libicu70 | libicu72 | libicu74, libssl3 | libssl1.1, libx11-6, libfontconfig1, libharfbuzz0b, libfreetype6, libxext6, libxrandr2, libxi6, libxcursor1, libxdamage1, libxfixes3, libxss1, libglib2.0-0, libgtk-3-0 | libgtk-4-1, libgdk-pixbuf-2.0-0, libcairo2, libpango-1.0-0, libatk1.0-0, libxcomposite1, libxrender1
+Recommends: acpi-support, udev, legion-laptop-enhanced-dkms, desktop-file-utils, xdg-utils, x11-xserver-utils
 Suggests: linux-modules-extra, linux-headers-generic
 Maintainer: ${MAINTAINER}
 Description: System management tool for Lenovo Legion laptops
@@ -339,17 +339,59 @@ if [ -d "/etc/systemd/system" ] && [ -x "$(command -v systemctl)" ]; then
 fi
 
 # Update desktop database and icon cache for GUI visibility
+echo "🔄 Updating desktop integration..."
+
+# Update desktop database
 if [ -x "$(command -v update-desktop-database)" ]; then
     update-desktop-database /usr/share/applications 2>/dev/null || true
+    echo "✅ Desktop database updated"
+else
+    echo "⚠️  update-desktop-database not available"
 fi
+
+# Update icon cache for multiple icon themes
+for icon_dir in /usr/share/icons/*/; do
+    if [ -d "$icon_dir" ] && [ -x "$(command -v gtk-update-icon-cache)" ]; then
+        gtk-update-icon-cache -f -t "$icon_dir" 2>/dev/null || true
+    fi
+done
 
 if [ -x "$(command -v gtk-update-icon-cache)" ]; then
     gtk-update-icon-cache -f -t /usr/share/icons/hicolor 2>/dev/null || true
+    echo "✅ Icon cache updated"
 fi
 
 # Update MIME database
 if [ -x "$(command -v update-mime-database)" ]; then
     update-mime-database /usr/share/mime 2>/dev/null || true
+    echo "✅ MIME database updated"
+fi
+
+# Ensure desktop file is properly registered
+if [ -f "/usr/share/applications/legion-toolkit.desktop" ]; then
+    # Fix permissions
+    chmod 644 /usr/share/applications/legion-toolkit.desktop
+
+    # Validate desktop file
+    if command -v desktop-file-validate >/dev/null 2>&1; then
+        if desktop-file-validate /usr/share/applications/legion-toolkit.desktop 2>/dev/null; then
+            echo "✅ Desktop file validated successfully"
+        else
+            echo "⚠️  Desktop file validation issues (may still work)"
+        fi
+    fi
+fi
+
+# Update XDG database
+if [ -x "$(command -v update-desktop-database)" ]; then
+    update-desktop-database 2>/dev/null || true
+fi
+
+# For KDE users
+if [ -x "$(command -v kbuildsycoca5)" ]; then
+    kbuildsycoca5 2>/dev/null || true
+elif [ -x "$(command -v kbuildsycoca4)" ]; then
+    kbuildsycoca4 2>/dev/null || true
 fi
 
 echo ""
@@ -363,7 +405,8 @@ echo "2. Log out and log back in (or restart) for group changes to take effect"
 echo ""
 echo "3. Launch the application:"
 echo "   - GUI: Search for 'Legion Toolkit' in your applications menu"
-echo "   - Or run: LegionToolkit"
+echo "   - GUI (manual): legion-toolkit-gui"
+echo "   - Direct binary: /usr/bin/LegionToolkit"
 echo "   - CLI: legion-toolkit --help"
 echo ""
 echo "📋 Hardware Support:"
@@ -372,9 +415,11 @@ echo "• Check module status: lsmod | grep legion"
 echo "• Install module: sudo modprobe legion-laptop"
 echo ""
 echo "🐛 Troubleshooting GUI Issues:"
-echo "• If GUI doesn't appear, try: /usr/bin/LegionToolkit"
-echo "• Check dependencies: ldd /usr/bin/LegionToolkit"
-echo "• Verify desktop file: desktop-file-validate /usr/share/applications/legion-toolkit.desktop"
+echo "• Run diagnostic tool: legion-toolkit-debug"
+echo "• Manual launch: /usr/bin/LegionToolkit"
+echo "• Check logs: journalctl --user -f | grep -i legion"
+echo "• Verify display: echo \$DISPLAY (should show :0 or similar)"
+echo "• Test in terminal: DISPLAY=:0 /usr/bin/LegionToolkit"
 echo ""
 echo "📖 Documentation: ${HOMEPAGE}"
 echo ""
@@ -411,6 +456,93 @@ chmod +x ./publish/debian-package/${PACKAGE_NAME}/usr/bin/LegionToolkit
 cd ./publish/debian-package/${PACKAGE_NAME}/usr/bin/
 ln -sf LegionToolkit legion-toolkit
 cd ../../../../..
+
+# Create GUI launcher wrapper script
+cat > ./publish/debian-package/${PACKAGE_NAME}/usr/bin/legion-toolkit-gui << 'EOF'
+#!/bin/bash
+# Legion Toolkit GUI Launcher Wrapper
+# Handles different desktop environments and display configurations
+
+# Function to detect and set proper display
+setup_display() {
+    # If DISPLAY is already set and working, use it
+    if [ -n "$DISPLAY" ]; then
+        if xset q >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+
+    # Try common display configurations
+    for disp in ":0" ":1" ":10" ":0.0"; do
+        export DISPLAY="$disp"
+        if xset q >/dev/null 2>&1; then
+            echo "Using DISPLAY=$DISPLAY"
+            return 0
+        fi
+    done
+
+    # If running in a desktop session, try to get display from session
+    if [ -n "$XDG_SESSION_ID" ]; then
+        local session_display=$(loginctl show-session "$XDG_SESSION_ID" -p Display --value 2>/dev/null)
+        if [ -n "$session_display" ]; then
+            export DISPLAY="$session_display"
+            if xset q >/dev/null 2>&1; then
+                echo "Using session DISPLAY=$DISPLAY"
+                return 0
+            fi
+        fi
+    fi
+
+    echo "Warning: Could not detect working X11 display"
+    export DISPLAY="${DISPLAY:-:0}"
+    return 1
+}
+
+# Function to check if running under Wayland
+is_wayland() {
+    [ -n "$WAYLAND_DISPLAY" ] || [ "$XDG_SESSION_TYPE" = "wayland" ]
+}
+
+# Main launcher logic
+main() {
+    echo "🚀 Starting Legion Toolkit GUI..."
+
+    # Check if binary exists
+    if [ ! -x "/usr/bin/LegionToolkit" ]; then
+        echo "❌ Error: LegionToolkit binary not found at /usr/bin/LegionToolkit"
+        exit 1
+    fi
+
+    # Handle Wayland sessions
+    if is_wayland; then
+        echo "🌊 Detected Wayland session"
+        # For Wayland, we might need XWayland
+        if command -v xwayland >/dev/null 2>&1; then
+            export GDK_BACKEND="wayland,x11"
+            export QT_QPA_PLATFORM="wayland;xcb"
+        fi
+    else
+        echo "🪟 Detected X11 session"
+        setup_display
+    fi
+
+    # Set additional environment variables for better GUI support
+    export QT_AUTO_SCREEN_SCALE_FACTOR=1
+    export QT_ENABLE_HIGHDPI_SCALING=1
+
+    # For better font rendering
+    export QT_FONT_DPI=96
+
+    # Start the application
+    echo "🎯 Launching Legion Toolkit..."
+    exec /usr/bin/LegionToolkit "$@"
+}
+
+# Run main function
+main "$@"
+EOF
+
+chmod +x ./publish/debian-package/${PACKAGE_NAME}/usr/bin/legion-toolkit-gui
 
 # Copy icon files if they exist
 mkdir -p ./publish/debian-package/${PACKAGE_NAME}/usr/share/icons/hicolor/256x256/apps/
@@ -499,19 +631,23 @@ chmod +x ./publish/debian-package/${PACKAGE_NAME}/usr/bin/legion-toolkit-debug
 # Create desktop file with correct paths
 cat > ./publish/debian-package/${PACKAGE_NAME}/usr/share/applications/${PACKAGE_NAME}.desktop << EOF
 [Desktop Entry]
+Version=1.0
 Type=Application
 Name=Legion Toolkit
 GenericName=Legion Laptop Management
-Comment=System management tool for Lenovo Legion laptops
-Exec=/usr/bin/LegionToolkit
+Comment=System management tool for Lenovo Legion laptops - Thermal, RGB, Battery Control
+Exec=/usr/bin/legion-toolkit-gui %F
 Icon=${PACKAGE_NAME}
-Categories=System;Settings;HardwareSettings;
-Keywords=legion;lenovo;laptop;thermal;rgb;battery;performance;
+Categories=System;Settings;HardwareSettings;Utility;
+Keywords=legion;lenovo;laptop;thermal;rgb;battery;performance;gaming;
+MimeType=application/x-legion-profile;
 Terminal=false
 StartupNotify=true
 StartupWMClass=LegionToolkit
-TryExec=/usr/bin/LegionToolkit
-Actions=PowerQuiet;PowerBalanced;PowerPerformance;BatteryConservation;
+X-GNOME-SingleWindow=true
+X-KDE-StartupNotify=true
+TryExec=/usr/bin/legion-toolkit-gui
+Actions=PowerQuiet;PowerBalanced;PowerPerformance;BatteryConservation;OpenCLI;
 
 [Desktop Action PowerQuiet]
 Name=Set Quiet Mode
@@ -532,6 +668,35 @@ Icon=${PACKAGE_NAME}
 Name=Toggle Battery Conservation
 Exec=/usr/bin/LegionToolkit battery conservation toggle
 Icon=${PACKAGE_NAME}
+
+[Desktop Action OpenCLI]
+Name=Open CLI Terminal
+Exec=x-terminal-emulator -e /usr/bin/legion-toolkit --help
+Icon=utilities-terminal
+
+[Desktop Action DirectLaunch]
+Name=Direct Launch (Debug)
+Exec=/usr/bin/LegionToolkit
+Icon=${PACKAGE_NAME}
+EOF
+
+# Create alternative desktop file for advanced users
+cat > ./publish/debian-package/${PACKAGE_NAME}/usr/share/applications/${PACKAGE_NAME}-direct.desktop << EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Legion Toolkit (Direct)
+GenericName=Legion Laptop Management (Direct Launch)
+Comment=Direct launch Legion Toolkit without wrapper - for debugging
+Exec=env DISPLAY=:0 /usr/bin/LegionToolkit %F
+Icon=${PACKAGE_NAME}
+Categories=System;Settings;HardwareSettings;Utility;Development;
+Keywords=legion;lenovo;laptop;thermal;rgb;battery;performance;gaming;debug;
+Terminal=false
+StartupNotify=true
+StartupWMClass=LegionToolkit
+TryExec=/usr/bin/LegionToolkit
+NoDisplay=true
 EOF
 
 # Create udev rules for hardware access
