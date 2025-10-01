@@ -33,15 +33,21 @@
 
 /* Compatibility definitions for different kernel versions */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5,10,0)
+#ifndef LEGION_COMPAT_OLD_THERMAL
 #define LEGION_COMPAT_OLD_THERMAL
+#endif
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5,15,0)
+#ifndef LEGION_COMPAT_OLD_PLATFORM
 #define LEGION_COMPAT_OLD_PLATFORM
+#endif
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,0,0)
+#ifndef LEGION_COMPAT_NEW_KERNEL
 #define LEGION_COMPAT_NEW_KERNEL
+#endif
 #endif
 
 #define LEGION_ENHANCED_VERSION "2.0.0"
@@ -299,6 +305,7 @@ static int legion_call_acpi_method(struct acpi_device *adev, const char *method,
 {
     union acpi_object arg_obj;
     struct acpi_object_list args;
+    struct acpi_buffer output = { ACPI_ALLOCATE_BUFFER, NULL };
     union acpi_object *obj;
     acpi_status status;
     int ret = 0;
@@ -312,19 +319,18 @@ static int legion_call_acpi_method(struct acpi_device *adev, const char *method,
     args.count = 1;
     args.pointer = &arg_obj;
 
-    status = acpi_evaluate_object(adev->handle, (char *)method, &args, &obj);
+    status = acpi_evaluate_object(adev->handle, (char *)method, &args, &output);
     if (ACPI_FAILURE(status)) {
         legion_dbg("ACPI method %s failed: %s\n", method, acpi_format_exception(status));
         return -EIO;
     }
 
+    obj = output.pointer;
     if (obj && obj->type == ACPI_TYPE_INTEGER && result) {
         *result = (int)obj->integer.value;
     }
 
-    if (obj) {
-        kfree(obj);
-    }
+    kfree(output.pointer);
 
     return ret;
 }
@@ -820,8 +826,6 @@ static int legion_laptop_probe(struct platform_device *pdev)
 /* Platform device remove */
 static int legion_laptop_remove(struct platform_device *pdev)
 {
-    struct legion_laptop *legion = platform_get_drvdata(pdev);
-
     legion_info("Removing Legion Enhanced driver\n");
 
     /* Remove sysfs attributes */
