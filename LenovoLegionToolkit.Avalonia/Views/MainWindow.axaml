@@ -6,12 +6,14 @@
         Title="{Binding WindowTitle}"
         Width="1200" Height="800"
         MinWidth="900" MinHeight="600"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Background="#202020"
+        ShowInTaskbar="True"
+        CanResize="True">
 
     <Window.Styles>
         <Style Selector="Window">
-            <Setter Property="TransparencyLevelHint" Value="AcrylicBlur"/>
-            <Setter Property="Background" Value="#F0202020"/>
+            <Setter Property="Background" Value="#202020"/>
         </Style>
     </Window.Styles>
 

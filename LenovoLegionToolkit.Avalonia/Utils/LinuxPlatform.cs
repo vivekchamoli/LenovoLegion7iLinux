@@ -104,31 +104,51 @@ namespace LenovoLegionToolkit.Avalonia.Utils
         {
             try
             {
-                // Check if module is loaded
+                // Check if any legion module is loaded
                 var modulesPath = "/proc/modules";
                 if (File.Exists(modulesPath))
                 {
                     var content = File.ReadAllText(modulesPath);
-                    if (content.Contains("legion_laptop"))
+                    // Check for enhanced module first, then standard module
+                    if (content.Contains("legion_laptop_enhanced") || content.Contains("legion_laptop"))
+                    {
+                        Logger.Info("Legion kernel module found: loaded");
                         return true;
+                    }
                 }
 
-                // Check if module exists but not loaded
-                var process = Process.Start(new ProcessStartInfo
+                // Check if either module exists but not loaded (try enhanced first)
+                foreach (var moduleName in new[] { "legion_laptop_enhanced", "legion-laptop-enhanced", "legion_laptop", "legion-laptop" })
                 {
-                    FileName = "modinfo",
-                    Arguments = "legion-laptop",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                });
+                    try
+                    {
+                        var process = Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "modinfo",
+                            Arguments = moduleName,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        });
 
-                if (process != null)
-                {
-                    process.WaitForExit();
-                    return process.ExitCode == 0;
+                        if (process != null)
+                        {
+                            process.WaitForExit();
+                            if (process.ExitCode == 0)
+                            {
+                                Logger.Info($"Legion kernel module found: {moduleName} (available but not loaded)");
+                                return true;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Try next module name
+                    }
                 }
+
+                Logger.Debug("No Legion kernel module found");
             }
             catch (Exception ex)
             {
@@ -143,28 +163,45 @@ namespace LenovoLegionToolkit.Avalonia.Utils
             if (HasLegionKernelModule)
                 return true;
 
-            try
+            // Try loading enhanced module first, then standard module
+            foreach (var moduleName in new[] { "legion_laptop_enhanced", "legion-laptop" })
             {
-                var process = Process.Start(new ProcessStartInfo
+                try
                 {
-                    FileName = "sudo",
-                    Arguments = "modprobe legion-laptop",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                });
+                    Logger.Info($"Attempting to load kernel module: {moduleName}");
+                    var process = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "sudo",
+                        Arguments = $"modprobe {moduleName}",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    });
 
-                if (process != null)
+                    if (process != null)
+                    {
+                        await process.WaitForExitAsync();
+                        if (process.ExitCode == 0)
+                        {
+                            Logger.Info($"Successfully loaded kernel module: {moduleName}");
+                            _hasLegionKernelModule = null; // Reset cache
+                            return CheckLegionModule();
+                        }
+                        else
+                        {
+                            var error = await process.StandardError.ReadToEndAsync();
+                            Logger.Debug($"Failed to load {moduleName}: {error}");
+                        }
+                    }
+                }
+                catch (Exception ex)
                 {
-                    await process.WaitForExitAsync();
-                    _hasLegionKernelModule = null; // Reset cache
-                    return CheckLegionModule();
+                    Logger.Debug($"Failed to load {moduleName}: {ex.Message}");
                 }
             }
-            catch (Exception ex)
-            {
-                Logger.Error("Failed to load Legion module", ex);
-            }
 
+            Logger.Warning("Failed to load any Legion kernel module");
             return false;
         }
 
