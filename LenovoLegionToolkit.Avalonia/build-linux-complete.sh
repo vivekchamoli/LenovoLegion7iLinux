@@ -290,7 +290,7 @@ Version: ${VERSION}
 Section: utils
 Priority: optional
 Architecture: amd64
-Depends: libc6 (>= 2.31), libicu70 | libicu72 | libicu74, libssl3 | libssl1.1, libx11-6, libfontconfig1, libharfbuzz0b, libfreetype6, libxext6, libxrandr2, libxi6, libxcursor1, libxdamage1, libxfixes3, libxss1, libglib2.0-0, libgtk-3-0 | libgtk-4-1, libgdk-pixbuf-2.0-0, libcairo2, libpango-1.0-0, libatk1.0-0, libxcomposite1, libxrender1, libskia0 | libskiasharp-skia84 | libskia2, libopengl0, libgl1-mesa-glx | libgl1, libglu1-mesa | libglu1, libdrm2, libgbm1, libegl1-mesa | libegl1, libwayland-client0, libwayland-cursor0, libwayland-egl1, libxkbcommon0, libxkbcommon-x11-0, libgio-2.0-0, libdbus-1-3
+Depends: libc6 (>= 2.31), libicu70 | libicu72 | libicu74 | libicu67 | libicu66, libssl3 | libssl1.1, libx11-6, libfontconfig1, libharfbuzz0b, libfreetype6, libxext6, libxrandr2, libxi6, libxcursor1, libxdamage1, libxfixes3, libxss1, libglib2.0-0, libgtk-3-0 | libgtk-4-1, libgdk-pixbuf-2.0-0, libcairo2, libpango-1.0-0, libatk1.0-0, libxcomposite1, libxrender1, libopengl0, libgl1-mesa-glx | libgl1, libglu1-mesa | libglu1, libdrm2, libgbm1, libegl1-mesa | libegl1, libwayland-client0, libwayland-cursor0, libwayland-egl1, libxkbcommon0, libxkbcommon-x11-0, libdbus-1-3
 Recommends: acpi-support, udev, legion-laptop-enhanced-dkms, desktop-file-utils, xdg-utils, x11-xserver-utils
 Suggests: linux-modules-extra, linux-headers-generic
 Maintainer: ${MAINTAINER}
