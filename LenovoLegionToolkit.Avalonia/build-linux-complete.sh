@@ -874,15 +874,44 @@ echo "🔧 Critical Dependencies:"
 # Check .NET dependencies
 echo "• .NET Runtime Dependencies:"
 missing_dotnet=""
-for lib in libc6 libicu70 libicu72 libicu74 libssl3 libssl1.1; do
-    # Use word boundaries to prevent false matches (libicu700 matching libicu70)
+
+# Check required libraries (not alternatives)
+for lib in libc6; do
     if dpkg -l 2>/dev/null | grep -qE "^ii[[:space:]]+${lib}[[:space:]]|^ii[[:space:]]+${lib}:"; then
         echo "  ✅ $lib"
     else
         missing_dotnet="$missing_dotnet $lib"
-        echo "  ❌ $lib (missing)"
+        echo "  ❌ $lib (missing - REQUIRED)"
     fi
 done
+
+# Check ICU libraries (alternatives - only one needed)
+icu_found=false
+for lib in libicu70 libicu72 libicu74 libicu67 libicu66; do
+    if dpkg -l 2>/dev/null | grep -qE "^ii[[:space:]]+${lib}[[:space:]]|^ii[[:space:]]+${lib}:"; then
+        echo "  ✅ $lib (ICU library)"
+        icu_found=true
+        break
+    fi
+done
+if [ "$icu_found" = "false" ]; then
+    echo "  ❌ ICU library missing (need one of: libicu70, libicu72, libicu74)"
+    missing_dotnet="$missing_dotnet libicu"
+fi
+
+# Check SSL libraries (alternatives - only one needed)
+ssl_found=false
+for lib in libssl3 libssl1.1; do
+    if dpkg -l 2>/dev/null | grep -qE "^ii[[:space:]]+${lib}[[:space:]]|^ii[[:space:]]+${lib}:"; then
+        echo "  ✅ $lib (SSL library)"
+        ssl_found=true
+        break
+    fi
+done
+if [ "$ssl_found" = "false" ]; then
+    echo "  ❌ SSL library missing (need one of: libssl3, libssl1.1)"
+    missing_dotnet="$missing_dotnet libssl"
+fi
 
 # Check SkiaSharp dependencies
 echo "• SkiaSharp Dependencies:"
@@ -913,8 +942,8 @@ fi
 echo "• Graphics Dependencies:"
 for lib in libGL libopengl libdrm libgbm libEGL; do
     if ldconfig -p 2>/dev/null | grep -q "${lib}.so"; then
-        # Find which package provides it
-        local pkg_name=""
+        # Find which package provides it (no local keyword needed in for loop)
+        pkg_name=""
         case "$lib" in
             libGL) pkg_name="libgl1 / libgl1-mesa-glx" ;;
             libopengl) pkg_name="libopengl0" ;;
