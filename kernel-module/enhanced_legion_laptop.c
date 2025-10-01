@@ -906,21 +906,34 @@ static int __init legion_laptop_init(void)
         goto err_unregister_driver;
     }
 
-    /* Find and set ACPI companion - proper callback usage */
+    /* Find and set ACPI companion */
     {
         struct acpi_device *adev = NULL;
+        acpi_handle handle;
         acpi_status status;
 
-        /* Look for Legion embedded controller */
-        status = acpi_get_devices("PNP0C09",
-            (acpi_get_devices_callback)acpi_bus_get_device,
-            NULL, (void **)&adev);
+        /* Look for Legion embedded controller using handle */
+        status = acpi_get_handle(NULL, "\\_SB.PCI0.LPCB.EC0", &handle);
+        if (ACPI_FAILURE(status)) {
+            /* Try alternative EC path */
+            status = acpi_get_handle(NULL, "\\_SB.EC0", &handle);
+        }
+        if (ACPI_FAILURE(status)) {
+            /* Try PNP0C09 path */
+            status = acpi_get_handle(NULL, "\\_SB.PCI0.LPCB.H_EC", &handle);
+        }
 
-        if (ACPI_SUCCESS(status) && adev) {
-            ACPI_COMPANION_SET(&legion_laptop_device->dev, adev);
-            legion_dbg("Found ACPI device PNP0C09\n");
-        } else {
-            legion_warn("ACPI device not found - some features may not work\n");
+        if (ACPI_SUCCESS(status)) {
+            /* Get device from handle */
+            status = acpi_bus_get_device(handle, &adev);
+            if (ACPI_SUCCESS(status) && adev) {
+                ACPI_COMPANION_SET(&legion_laptop_device->dev, adev);
+                legion_dbg("Found ACPI EC device\n");
+            }
+        }
+
+        if (!adev) {
+            legion_warn("ACPI EC device not found - some features may not work\n");
         }
     }
 
