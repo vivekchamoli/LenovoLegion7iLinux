@@ -21,39 +21,49 @@ public class Program
             // Initialize logger first
             Logger.Initialize(LogLevel.Info, true);
             Logger.Info("Legion Toolkit starting...");
+            Logger.Info($"Command line args: {string.Join(" ", args)}");
 
             // Setup dependency injection
+            Logger.Info("Building service provider...");
             var services = new ServiceCollection();
             services.AddLegionToolkitServices();
             ServiceProvider = services.BuildServiceProvider();
+            Logger.Info("Service provider created");
 
             // Initialize services asynchronously in background
-            Task.Run(async () =>
+            // Don't wait for this - let it run in parallel with UI startup
+            var initTask = Task.Run(async () =>
             {
                 try
                 {
-                    Logger.Info("Initializing services...");
+                    Logger.Info("Initializing services in background...");
                     await ServiceProvider.InitializeServicesAsync();
                     Logger.Info("Services initialized successfully");
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error("Failed to initialize services", ex);
+                    Logger.Error("Failed to initialize services (non-fatal)", ex);
                 }
             });
+
+            Logger.Info("Starting Avalonia application...");
 
             // Build and run Avalonia app
             BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args);
+
+            Logger.Info("Avalonia application exited");
         }
         catch (Exception ex)
         {
             Logger.Critical("Fatal error during startup", ex);
+            Console.Error.WriteLine($"FATAL: {ex}");
             throw;
         }
         finally
         {
             // Cleanup
+            Logger.Info("Cleaning up...");
             if (ServiceProvider is IDisposable disposable)
             {
                 disposable.Dispose();

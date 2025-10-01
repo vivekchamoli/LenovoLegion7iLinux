@@ -22,37 +22,66 @@ public partial class App : Application
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
+                Logger.Info("Starting application framework initialization");
+
                 // Get service provider from Program
                 var serviceProvider = Program.ServiceProvider;
                 if (serviceProvider == null)
                 {
+                    Logger.Critical("Service provider is null!");
                     throw new InvalidOperationException("Service provider not initialized");
                 }
 
+                Logger.Info("Service provider obtained");
+
                 // Create main window with view model from DI
                 var mainViewModel = serviceProvider.GetRequiredService<MainViewModel>();
+                Logger.Info("MainViewModel created");
+
                 var mainWindow = new MainWindow
                 {
                     DataContext = mainViewModel
                 };
+                Logger.Info("MainWindow created");
 
                 desktop.MainWindow = mainWindow;
                 desktop.ShutdownRequested += OnShutdownRequested;
 
-                // Initialize the main view model
-                mainViewModel.Initialize();
+                Logger.Info("Main window assigned to desktop lifetime");
+
+                // Initialize the main view model after window is set
+                try
+                {
+                    mainViewModel.Initialize();
+                    Logger.Info("MainViewModel initialized");
+                }
+                catch (Exception initEx)
+                {
+                    Logger.Error("Failed to initialize MainViewModel", initEx);
+                    // Continue anyway - window should still show
+                }
+
+                // Force show the window
+                mainWindow.Show();
+                mainWindow.Activate();
+                Logger.Info("Window Show() and Activate() called");
 
                 Logger.Info("Application framework initialization completed");
+            }
+            else
+            {
+                Logger.Error("ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime");
             }
         }
         catch (Exception ex)
         {
             Logger.Critical("Failed to initialize application", ex);
+            Console.Error.WriteLine($"CRITICAL ERROR: {ex}");
 
-            // Show error to user if possible
+            // Try to show error to user
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                // In a real app, you'd show an error dialog here
+                Console.Error.WriteLine("Shutting down due to initialization failure");
                 desktop.Shutdown(1);
             }
         }

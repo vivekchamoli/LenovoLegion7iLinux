@@ -119,33 +119,73 @@ namespace LenovoLegionToolkit.Avalonia.ViewModels
         {
             try
             {
+                Logger.Info("Starting MainViewModel initialization");
                 IsBusy = true;
                 StatusText = "Initializing...";
 
-                // Load settings
-                await _settingsService.LoadSettingsAsync();
+                try
+                {
+                    // Load settings
+                    Logger.Info("Loading settings...");
+                    await _settingsService.LoadSettingsAsync();
+                    Logger.Info("Settings loaded");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warning("Failed to load settings", ex);
+                    // Continue anyway
+                }
 
-                // Get hardware info
-                var hardwareInfo = await _hardwareService.GetHardwareInfoAsync();
-                WindowTitle = $"Legion Toolkit - {hardwareInfo.Model}";
+                try
+                {
+                    // Get hardware info
+                    Logger.Info("Getting hardware info...");
+                    var hardwareInfo = await _hardwareService.GetHardwareInfoAsync();
+                    WindowTitle = $"Legion Toolkit - {hardwareInfo.Model}";
+                    Logger.Info($"Hardware info loaded: {hardwareInfo.Model}");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warning("Failed to get hardware info", ex);
+                    WindowTitle = "Legion Toolkit for Linux";
+                }
 
-                // Check capabilities and update navigation
-                var capabilities = await _hardwareService.DetectCapabilitiesAsync();
-                UpdateNavigationBasedOnCapabilities(capabilities);
+                try
+                {
+                    // Check capabilities and update navigation
+                    Logger.Info("Detecting hardware capabilities...");
+                    var capabilities = await _hardwareService.DetectCapabilitiesAsync();
+                    UpdateNavigationBasedOnCapabilities(capabilities);
+                    Logger.Info("Capabilities detected");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warning("Failed to detect capabilities", ex);
+                    // Continue with default navigation
+                }
 
-                // Apply settings
-                ApplySettings();
+                try
+                {
+                    // Apply settings
+                    Logger.Info("Applying settings...");
+                    ApplySettings();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warning("Failed to apply settings", ex);
+                }
 
                 _isInitialized = true;
                 StatusText = "Ready";
 
-                Logger.Info("Main window initialized");
+                Logger.Info("Main window initialized successfully");
             }
             catch (Exception ex)
             {
                 Logger.Error("Failed to initialize main window", ex);
-                StatusText = "Initialization failed";
-                SetError($"Initialization failed: {ex.Message}");
+                StatusText = "Initialization failed - some features may be unavailable";
+                // Don't call SetError - it might not exist yet
+                _isInitialized = true; // Mark as initialized anyway so window shows
             }
             finally
             {
