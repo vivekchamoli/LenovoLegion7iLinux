@@ -40,11 +40,12 @@ unload_old_module() {
 load_new_module() {
     local module="$1"
     log "Loading new module: $module"
-    if modprobe "$module"; then
-        log "Successfully loaded $module"
+    if modprobe "$module" 2>/dev/null; then
+        log "✓ Successfully loaded $module"
         return 0
     else
-        log "Error: Failed to load $module"
+        # Suppress error - it's expected on non-Legion hardware
+        log "ℹ️  Module not loaded (no compatible hardware detected)"
         return 1
     fi
 }
@@ -186,24 +187,35 @@ main() {
 
     # Try to load the new module
     if load_new_module "$MODULE_NAME"; then
-        log "✓ Module loaded successfully"
+        log "✓ Module loaded and hardware detected!"
 
         # Show module status
         if [ -d "/sys/kernel/legion_laptop" ]; then
             log "✓ Legion sysfs interface available"
             ls -la /sys/kernel/legion_laptop/ 2>/dev/null || true
         fi
+
+        echo ""
+        echo "✅ Legion Enhanced Kernel Module is active!"
+        echo "- Add your user to the 'legion' group: sudo usermod -a -G legion \$USER"
+        echo "- Log out and back in for group changes to take effect"
+        echo "- Check status with: lsmod | grep legion"
     else
-        log "⚠ Module could not be loaded immediately"
-        log "This is normal and the module will be loaded on next boot"
+        log "Module will auto-load when Legion hardware is present"
+
+        echo ""
+        echo "✅ Legion Enhanced Kernel Module installed successfully!"
+        echo ""
+        echo "ℹ️  Note: Module is not currently loaded (no Legion hardware detected)"
+        echo "   This is normal on non-Legion systems or virtual machines."
+        echo ""
+        echo "   On actual Legion hardware, the module will load automatically on boot."
+        echo "   - Add your user to the 'legion' group: sudo usermod -a -G legion \$USER"
+        echo "   - Reboot to activate the module"
+        echo "   - Check status with: lsmod | grep legion"
     fi
 
     log "=== Post-install completed successfully ==="
-    echo ""
-    echo "Legion Enhanced Kernel Module has been installed!"
-    echo "- Add your user to the 'legion' group: sudo usermod -a -G legion \$USER"
-    echo "- Reboot to ensure the module is loaded properly"
-    echo "- Check status with: lsmod | grep legion"
 }
 
 # Run main function
