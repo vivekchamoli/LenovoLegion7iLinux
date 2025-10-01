@@ -875,7 +875,8 @@ echo "🔧 Critical Dependencies:"
 echo "• .NET Runtime Dependencies:"
 missing_dotnet=""
 for lib in libc6 libicu70 libicu72 libicu74 libssl3 libssl1.1; do
-    if dpkg -l | grep -q "$lib" 2>/dev/null; then
+    # Use word boundaries to prevent false matches (libicu700 matching libicu70)
+    if dpkg -l 2>/dev/null | grep -qE "^ii[[:space:]]+${lib}[[:space:]]|^ii[[:space:]]+${lib}:"; then
         echo "  ✅ $lib"
     else
         missing_dotnet="$missing_dotnet $lib"
@@ -930,7 +931,8 @@ done
 # Check GIO/GTK dependencies (check actual packages that exist)
 echo "• GIO/GTK Dependencies:"
 for lib in libglib2.0-0 libgtk-3-0 libgtk-4-1 libdbus-1-3; do
-    if dpkg -l 2>/dev/null | grep -q "^ii.*$lib"; then
+    # Proper pattern matching to avoid false positives
+    if dpkg -l 2>/dev/null | grep -qE "^ii[[:space:]]+${lib}[[:space:]]|^ii[[:space:]]+${lib}:"; then
         echo "  ✅ $lib"
     else
         echo "  ❌ $lib (missing)"

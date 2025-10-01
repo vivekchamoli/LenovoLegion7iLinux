@@ -138,6 +138,9 @@ struct legion_laptop {
     bool rapid_charge;
     bool fn_lock;
 
+    /* Synchronization */
+    struct mutex lock;
+
     /* Debugging */
     struct dentry *debug_dir;
 
@@ -345,12 +348,14 @@ static int legion_set_thermal_mode(struct legion_laptop *legion, int mode)
         return -ENODEV;
     }
 
+    mutex_lock(&legion->lock);
     ret = legion_call_acpi_method(legion->adev, legion->methods.thermal_mode_method,
                                 mode, &result);
     if (ret == 0) {
         legion->thermal_mode = mode;
         legion_dbg("Thermal mode set to %d\n", mode);
     }
+    mutex_unlock(&legion->lock);
 
     return ret;
 }
@@ -364,11 +369,13 @@ static int legion_get_thermal_mode(struct legion_laptop *legion)
         return -ENODEV;
     }
 
+    mutex_lock(&legion->lock);
     ret = legion_call_acpi_method(legion->adev, legion->methods.thermal_mode_method,
                                 -1, &result);
     if (ret == 0) {
         legion->thermal_mode = result;
     }
+    mutex_unlock(&legion->lock);
 
     return ret == 0 ? result : ret;
 }
@@ -784,6 +791,9 @@ static int legion_laptop_probe(struct platform_device *pdev)
     legion->pdev = pdev;
     legion->adev = adev;
 
+    /* Initialize mutex for thread-safe access */
+    mutex_init(&legion->lock);
+
     /* Detect generation */
     legion->generation = legion_detect_generation();
     if (legion->generation == LEGION_GEN_UNKNOWN && !force_load) {
@@ -810,29 +820,40 @@ static int legion_laptop_probe(struct platform_device *pdev)
     ret = sysfs_create_group(&pdev->dev.kobj, &legion_laptop_group);
     if (ret) {
         legion_err("Failed to create sysfs group: %d\n", ret);
-        return ret;
+        goto err_destroy_mutex;
     }
 
     /* Initialize current states */
     legion_get_thermal_mode(legion);
 
-    /* Store global reference */
+    /* Store global reference - no mutex needed here as probe is serialized */
     legion_device = legion;
 
     legion_info("Legion Enhanced driver loaded successfully\n");
     return 0;
+
+err_destroy_mutex:
+    mutex_destroy(&legion->lock);
+    return ret;
 }
 
 /* Platform device remove */
 static int legion_laptop_remove(struct platform_device *pdev)
 {
+    struct legion_laptop *legion = platform_get_drvdata(pdev);
+
     legion_info("Removing Legion Enhanced driver\n");
 
-    /* Remove sysfs attributes */
+    /* Clear global reference first to prevent new accesses */
+    legion_device = NULL;
+
+    /* Remove sysfs attributes - this blocks until all sysfs operations complete */
     sysfs_remove_group(&pdev->dev.kobj, &legion_laptop_group);
 
-    /* Clear global reference */
-    legion_device = NULL;
+    /* Destroy mutex after all users are done */
+    if (legion) {
+        mutex_destroy(&legion->lock);
+    }
 
     return 0;
 }
@@ -885,12 +906,21 @@ static int __init legion_laptop_init(void)
         goto err_unregister_driver;
     }
 
-    /* Find and set ACPI companion */
+    /* Find and set ACPI companion - proper callback usage */
     {
         struct acpi_device *adev = NULL;
-        acpi_get_devices("PNP0C09", NULL, NULL, (void **)&adev);
-        if (adev) {
+        acpi_status status;
+
+        /* Look for Legion embedded controller */
+        status = acpi_get_devices("PNP0C09",
+            (acpi_get_devices_callback)acpi_bus_get_device,
+            NULL, (void **)&adev);
+
+        if (ACPI_SUCCESS(status) && adev) {
             ACPI_COMPANION_SET(&legion_laptop_device->dev, adev);
+            legion_dbg("Found ACPI device PNP0C09\n");
+        } else {
+            legion_warn("ACPI device not found - some features may not work\n");
         }
     }
 
