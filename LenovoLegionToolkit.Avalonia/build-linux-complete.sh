@@ -125,6 +125,11 @@ create_dkms_package() {
     # Copy kernel module source files
     if [ -d "../kernel-module" ]; then
         cp -r ../kernel-module/* "./publish/dkms-package/${dkms_name}-dkms/usr/src/${dkms_name}-${dkms_version}/"
+
+        # Ensure scripts are executable
+        if [ -d "./publish/dkms-package/${dkms_name}-dkms/usr/src/${dkms_name}-${dkms_version}/scripts" ]; then
+            chmod +x "./publish/dkms-package/${dkms_name}-dkms/usr/src/${dkms_name}-${dkms_version}/scripts"/*.sh
+        fi
     else
         echo -e "${YELLOW}⚠️  Warning: Kernel module source not found at ../kernel-module${NC}"
         echo -e "   DKMS package will be created without kernel module source"
@@ -180,12 +185,19 @@ if dkms build -m $DKMS_NAME -v $DKMS_VERSION; then
     if dkms install -m $DKMS_NAME -v $DKMS_VERSION; then
         echo "✅ Module installed successfully"
 
-        # Try to load the module
-        if modprobe legion_laptop_enhanced; then
+        # Try to load the module (only if on compatible hardware)
+        if modprobe legion_laptop_enhanced 2>/dev/null; then
             echo "✅ Enhanced Legion module loaded successfully"
+            lsmod | grep legion_laptop_enhanced || true
         else
-            echo "⚠️  Module installed but could not be loaded immediately"
-            echo "   Try 'sudo modprobe legion_laptop_enhanced' or reboot"
+            # Module install succeeded but load failed - this is OK if not on Legion hardware
+            echo "ℹ️  Module installed successfully"
+            echo "   Module will load automatically on Legion hardware"
+            echo ""
+            echo "   If you're on Legion hardware and the module doesn't load:"
+            echo "   - Check hardware compatibility: dmesg | grep -i legion"
+            echo "   - Try loading manually: sudo modprobe legion_laptop_enhanced"
+            echo "   - Check module info: modinfo legion_laptop_enhanced"
         fi
     else
         echo "❌ Failed to install module"
