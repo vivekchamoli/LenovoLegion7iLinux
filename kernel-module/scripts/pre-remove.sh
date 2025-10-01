@@ -7,7 +7,7 @@ set -e
 
 MODULE_NAME="legion_laptop_enhanced"
 MODULE_VERSION="2.0.0"
-KERNEL_VERSION="$1"
+KERNEL_VERSION="${1:-$(uname -r)}"
 
 echo "=== Legion Enhanced Kernel Module Pre-Remove ==="
 echo "Module: $MODULE_NAME v$MODULE_VERSION"
@@ -104,6 +104,11 @@ remove_module_config() {
 
 # Function to restore original module
 restore_original_module() {
+    if [ -z "$KERNEL_VERSION" ]; then
+        log "Skipping restore - kernel version not specified"
+        return 0
+    fi
+
     local backup_path="/lib/modules/$KERNEL_VERSION/kernel/drivers/platform/x86/legion-laptop.ko.backup"
     local orig_module_path="/lib/modules/$KERNEL_VERSION/kernel/drivers/platform/x86/legion-laptop.ko"
 
@@ -119,6 +124,11 @@ restore_original_module() {
 
 # Function to clean up module files
 cleanup_module_files() {
+    if [ -z "$KERNEL_VERSION" ]; then
+        log "Skipping file cleanup - kernel version not specified"
+        return 0
+    fi
+
     local module_path="/lib/modules/$KERNEL_VERSION/extra/$MODULE_NAME.ko"
 
     if [ -f "$module_path" ]; then
@@ -144,12 +154,14 @@ show_removal_status() {
         log "✓ Module successfully unloaded"
     fi
 
-    # Check if files are removed
-    local module_path="/lib/modules/$KERNEL_VERSION/extra/$MODULE_NAME.ko"
-    if [ ! -f "$module_path" ]; then
-        log "✓ Module files removed"
-    else
-        log "⚠ Some module files may still exist"
+    # Check if files are removed (only if kernel version is known)
+    if [ -n "$KERNEL_VERSION" ]; then
+        local module_path="/lib/modules/$KERNEL_VERSION/extra/$MODULE_NAME.ko"
+        if [ ! -f "$module_path" ]; then
+            log "✓ Module files removed"
+        else
+            log "⚠ Some module files may still exist"
+        fi
     fi
 }
 

@@ -7,7 +7,7 @@ set -e
 
 MODULE_NAME="legion_laptop_enhanced"
 MODULE_VERSION="2.0.0"
-KERNEL_VERSION="$1"
+KERNEL_VERSION="${1:-$(uname -r)}"
 
 echo "=== Legion Enhanced Kernel Module Post-Install ==="
 echo "Module: $MODULE_NAME v$MODULE_VERSION"
@@ -122,6 +122,11 @@ EOF
 
 # Function to backup original legion-laptop module
 backup_original_module() {
+    if [ -z "$KERNEL_VERSION" ]; then
+        log "Skipping backup - kernel version not specified"
+        return 0
+    fi
+
     local orig_module_path="/lib/modules/$KERNEL_VERSION/kernel/drivers/platform/x86/legion-laptop.ko"
     local backup_path="/lib/modules/$KERNEL_VERSION/kernel/drivers/platform/x86/legion-laptop.ko.backup"
 
@@ -133,25 +138,21 @@ backup_original_module() {
 
 # Function to verify installation
 verify_installation() {
-    local module_path="/lib/modules/$KERNEL_VERSION/extra/$MODULE_NAME.ko"
-
-    if [ -f "$module_path" ]; then
-        log "✓ Module installed at: $module_path"
-    else
-        log "✗ Module not found at: $module_path"
-        return 1
-    fi
-
-    # Check module info
+    # Check module info (works regardless of kernel version)
     if modinfo "$MODULE_NAME" >/dev/null 2>&1; then
         log "✓ Module info available"
-        modinfo "$MODULE_NAME" | grep -E "^(version|description|author):"
+        modinfo "$MODULE_NAME" | grep -E "^(version|description|author):" || true
+
+        # Try to find the actual module path
+        local module_path=$(modinfo -n "$MODULE_NAME" 2>/dev/null)
+        if [ -n "$module_path" ] && [ -f "$module_path" ]; then
+            log "✓ Module installed at: $module_path"
+        fi
+        return 0
     else
         log "✗ Module info not available"
         return 1
     fi
-
-    return 0
 }
 
 # Main installation process
