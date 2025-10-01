@@ -335,8 +335,8 @@ Version: ${VERSION}
 Section: utils
 Priority: optional
 Architecture: amd64
-Depends: libc6 (>= 2.31), libicu70 | libicu72 | libicu74 | libicu67 | libicu66, libssl3 | libssl1.1, libx11-6, libfontconfig1, libharfbuzz0b, libfreetype6, libxext6, libxrandr2, libxi6, libxcursor1, libxdamage1, libxfixes3, libxss1, libglib2.0-0, libgtk-3-0 | libgtk-4-1, libgdk-pixbuf-2.0-0, libcairo2, libpango-1.0-0, libatk1.0-0, libxcomposite1, libxrender1, libopengl0, libgl1-mesa-glx | libgl1, libglu1-mesa | libglu1, libdrm2, libgbm1, libegl1-mesa | libegl1, libwayland-client0, libwayland-cursor0, libwayland-egl1, libxkbcommon0, libxkbcommon-x11-0, libdbus-1-3
-Recommends: acpi-support, udev, legion-laptop-enhanced-dkms, desktop-file-utils, xdg-utils, x11-xserver-utils
+Depends: libc6 (>= 2.31), libicu70 | libicu72 | libicu74 | libicu67 | libicu66, libssl3 | libssl1.1, libglib2.0-0 (>= 2.56), libdbus-1-3, libx11-6, libfontconfig1, libharfbuzz0b, libfreetype6, libxext6, libxrandr2, libxi6, libxcursor1, libxdamage1, libxfixes3, libxss1, libgtk-3-0 | libgtk-4-1, libgdk-pixbuf-2.0-0, libcairo2, libpango-1.0-0, libatk1.0-0, libxcomposite1, libxrender1, libopengl0 | libgl1 | libgl1-mesa-glx, libglu1-mesa | libglu1, libdrm2, libgbm1, libegl1-mesa | libegl1, libwayland-client0, libwayland-cursor0, libwayland-egl1, libxkbcommon0, libxkbcommon-x11-0
+Recommends: acpi-support, udev, legion-laptop-enhanced-dkms, desktop-file-utils, xdg-utils, x11-xserver-utils, glib-networking
 Suggests: linux-modules-extra, linux-headers-generic
 Maintainer: ${MAINTAINER}
 Description: System management tool for Lenovo Legion laptops
@@ -908,25 +908,41 @@ if [ "$skiasharp_found" = "false" ]; then
     echo "     This will cause GUI rendering issues!"
 fi
 
-# Check Graphics dependencies
+# Check Graphics dependencies (check using ldconfig which shows actual available libraries)
 echo "• Graphics Dependencies:"
-for lib in libgl1-mesa-glx libgl1 libopengl0 libdrm2 libgbm1 libegl1-mesa; do
-    if ldconfig -p 2>/dev/null | grep -q "$lib"; then
+for lib in libGL libopengl libdrm libgbm libEGL; do
+    if ldconfig -p 2>/dev/null | grep -q "${lib}.so"; then
+        # Find which package provides it
+        local pkg_name=""
+        case "$lib" in
+            libGL) pkg_name="libgl1 / libgl1-mesa-glx" ;;
+            libopengl) pkg_name="libopengl0" ;;
+            libdrm) pkg_name="libdrm2" ;;
+            libgbm) pkg_name="libgbm1" ;;
+            libEGL) pkg_name="libegl1 / libegl1-mesa" ;;
+        esac
+        echo "  ✅ ${lib}.so ($pkg_name)"
+    else
+        echo "  ⚠️  ${lib}.so (may be missing, checking alternatives...)"
+    fi
+done
+
+# Check GIO/GTK dependencies (check actual packages that exist)
+echo "• GIO/GTK Dependencies:"
+for lib in libglib2.0-0 libgtk-3-0 libgtk-4-1 libdbus-1-3; do
+    if dpkg -l 2>/dev/null | grep -q "^ii.*$lib"; then
         echo "  ✅ $lib"
     else
         echo "  ❌ $lib (missing)"
     fi
 done
 
-# Check GIO/GTK dependencies
-echo "• GIO/GTK Dependencies:"
-for lib in libgio-2.0-0 libglib2.0-0 libgtk-3-0 libgtk-4-1 libdbus-1-3; do
-    if dpkg -l 2>/dev/null | grep -q "$lib"; then
-        echo "  ✅ $lib"
-    else
-        echo "  ❌ $lib (missing)"
-    fi
-done
+# Check GIO specifically using ldconfig (it's part of libglib2.0-0)
+if ldconfig -p 2>/dev/null | grep -q "libgio-2.0.so"; then
+    echo "  ✅ libgio-2.0.so (part of libglib2.0-0)"
+else
+    echo "  ❌ libgio-2.0.so (missing - install libglib2.0-0)"
+fi
 echo ""
 
 # Display Environment Check
