@@ -9,8 +9,9 @@
     <RootNamespace>LenovoLegionToolkit.Avalonia</RootNamespace>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
-    <PublishTrimmed>true</PublishTrimmed>
-    <TrimMode>link</TrimMode>
+    <PublishTrimmed>false</PublishTrimmed>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
     <Version>3.0.0</Version>
     <AssemblyVersion>3.0.0.0</AssemblyVersion>
     <FileVersion>3.0.0.0</FileVersion>
@@ -82,6 +83,19 @@
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
     <UseAppHost>true</UseAppHost>
     <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <PublishTrimmed>false</PublishTrimmed>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    <IsTrimmable>false</IsTrimmable>
+    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
+  </PropertyGroup>
+
+  <!-- Additional JSON serializer configuration for all platforms -->
+  <PropertyGroup>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+    <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+    <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
 
 </Project>

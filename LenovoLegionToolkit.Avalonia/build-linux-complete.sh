@@ -77,8 +77,8 @@ dotnet publish \
     --output ./publish/linux-x64 \
     --verbosity quiet \
     -p:PublishSingleFile=true \
-    -p:PublishTrimmed=true \
-    -p:TrimMode=link \
+    -p:PublishTrimmed=false \
+    -p:IncludeNativeLibrariesForSelfExtract=true \
     -p:DebugType=None \
     -p:DebugSymbols=false
 
@@ -91,8 +91,8 @@ dotnet publish \
     --output ./publish/linux-arm64 \
     --verbosity quiet \
     -p:PublishSingleFile=true \
-    -p:PublishTrimmed=true \
-    -p:TrimMode=link \
+    -p:PublishTrimmed=false \
+    -p:IncludeNativeLibrariesForSelfExtract=true \
     -p:DebugType=None \
     -p:DebugSymbols=false
 
@@ -280,7 +280,7 @@ Version: ${VERSION}
 Section: utils
 Priority: optional
 Architecture: amd64
-Depends: libc6 (>= 2.31), libicu70 | libicu72 | libicu74, libssl3 | libssl1.1, libx11-6, libfontconfig1, libharfbuzz0b, libfreetype6, libxext6, libxrandr2, libxi6, libxcursor1, libxdamage1, libxfixes3, libxss1, libglib2.0-0, libgtk-3-0 | libgtk-4-1, libgdk-pixbuf-2.0-0, libcairo2, libpango-1.0-0, libatk1.0-0, libxcomposite1, libxrender1
+Depends: libc6 (>= 2.31), libicu70 | libicu72 | libicu74, libssl3 | libssl1.1, libx11-6, libfontconfig1, libharfbuzz0b, libfreetype6, libxext6, libxrandr2, libxi6, libxcursor1, libxdamage1, libxfixes3, libxss1, libglib2.0-0, libgtk-3-0 | libgtk-4-1, libgdk-pixbuf-2.0-0, libcairo2, libpango-1.0-0, libatk1.0-0, libxcomposite1, libxrender1, libskia0 | libskiasharp-skia84 | libskia2, libopengl0, libgl1-mesa-glx | libgl1, libglu1-mesa | libglu1, libdrm2, libgbm1, libegl1-mesa | libegl1, libwayland-client0, libwayland-cursor0, libwayland-egl1, libxkbcommon0, libxkbcommon-x11-0, libgio-2.0-0, libdbus-1-3
 Recommends: acpi-support, udev, legion-laptop-enhanced-dkms, desktop-file-utils, xdg-utils, x11-xserver-utils
 Suggests: linux-modules-extra, linux-headers-generic
 Maintainer: ${MAINTAINER}
@@ -456,6 +456,24 @@ chmod +x ./publish/debian-package/${PACKAGE_NAME}/DEBIAN/prerm
 cp ./publish/linux-x64/LegionToolkit ./publish/debian-package/${PACKAGE_NAME}/usr/bin/
 chmod +x ./publish/debian-package/${PACKAGE_NAME}/usr/bin/LegionToolkit
 
+# Create lib directory for native libraries
+mkdir -p ./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/
+
+# Copy all native libraries from publish directory
+if [ -d "./publish/linux-x64/runtimes" ]; then
+    echo "📦 Copying native runtime libraries..."
+    cp -r ./publish/linux-x64/runtimes/* ./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/ 2>/dev/null || true
+fi
+
+# Copy any .so files from the publish directory
+find ./publish/linux-x64/ -name "*.so*" -exec cp {} ./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/ \; 2>/dev/null || true
+
+# Ensure libSkiaSharp.so is available
+if [ ! -f "./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/libSkiaSharp.so" ]; then
+    echo "⚠️  Warning: libSkiaSharp.so not found in build output"
+    echo "   This may cause GUI rendering issues"
+fi
+
 # Create symbolic link for command line access
 cd ./publish/debian-package/${PACKAGE_NAME}/usr/bin/
 ln -sf LegionToolkit legion-toolkit
@@ -465,51 +483,109 @@ cd ../../../../..
 cat > ./publish/debian-package/${PACKAGE_NAME}/usr/bin/legion-toolkit-gui << 'EOF'
 #!/bin/bash
 # Legion Toolkit GUI Launcher Wrapper
-# Handles different desktop environments and display configurations
+# Enhanced GIO-based desktop integration with comprehensive graphics support
 
-# Function to detect and set proper display
-setup_display() {
-    # If DISPLAY is already set and working, use it
-    if [ -n "$DISPLAY" ]; then
-        if xset q >/dev/null 2>&1; then
-            return 0
-        fi
+# Set library paths for SkiaSharp and native dependencies
+export LD_LIBRARY_PATH="/usr/lib/legion-toolkit:/usr/lib/legion-toolkit/linux-x64/native:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+export SKIASHARP_LIBRARY_PATH="/usr/lib/legion-toolkit:/usr/lib/x86_64-linux-gnu"
+
+# GIO-based desktop integration
+export GIO_MODULE_DIR="/usr/lib/x86_64-linux-gnu/gio/modules"
+export GSETTINGS_SCHEMA_DIR="/usr/share/glib-2.0/schemas"
+export XDG_DATA_DIRS="/usr/share:/usr/local/share:${XDG_DATA_DIRS:-/usr/share}"
+export XDG_CONFIG_DIRS="/etc/xdg:${XDG_CONFIG_DIRS:-/etc/xdg}"
+
+# Avalonia framework optimizations
+export AVALONIA_RENDER="software"  # Fallback to software rendering if needed
+export AVALONIA_GLOBAL_SCALE_FACTOR="${AVALONIA_GLOBAL_SCALE_FACTOR:-1.0}"
+
+# Function to detect and configure display environment
+setup_display_environment() {
+    # Detect session type
+    local session_type="${XDG_SESSION_TYPE:-unknown}"
+
+    case "$session_type" in
+        "wayland")
+            echo "🌊 Detected Wayland session"
+            export GDK_BACKEND="wayland,x11"
+            export QT_QPA_PLATFORM="wayland;xcb"
+            export AVALONIA_RENDER="skia"
+            ;;
+        "x11")
+            echo "🖥️  Detected X11 session"
+            export GDK_BACKEND="x11"
+            export QT_QPA_PLATFORM="xcb"
+            export AVALONIA_RENDER="skia"
+            setup_x11_display
+            ;;
+        *)
+            echo "🔍 Auto-detecting display environment..."
+            if [ -n "$WAYLAND_DISPLAY" ]; then
+                export GDK_BACKEND="wayland,x11"
+                export QT_QPA_PLATFORM="wayland;xcb"
+            elif [ -n "$DISPLAY" ]; then
+                export GDK_BACKEND="x11"
+                export QT_QPA_PLATFORM="xcb"
+                setup_x11_display
+            else
+                echo "⚠️  No display environment detected, using defaults"
+                export DISPLAY="${DISPLAY:-:0}"
+                export GDK_BACKEND="x11"
+            fi
+            ;;
+    esac
+}
+
+# Function to set up X11 display
+setup_x11_display() {
+    if [ -n "$DISPLAY" ] && xset q >/dev/null 2>&1; then
+        return 0
     fi
 
     # Try common display configurations
     for disp in ":0" ":1" ":10" ":0.0"; do
         export DISPLAY="$disp"
         if xset q >/dev/null 2>&1; then
-            echo "Using DISPLAY=$DISPLAY"
+            echo "✅ Using X11 DISPLAY=$DISPLAY"
             return 0
         fi
     done
 
-    # If running in a desktop session, try to get display from session
-    if [ -n "$XDG_SESSION_ID" ]; then
+    # Try to get display from loginctl
+    if command -v loginctl >/dev/null 2>&1 && [ -n "$XDG_SESSION_ID" ]; then
         local session_display=$(loginctl show-session "$XDG_SESSION_ID" -p Display --value 2>/dev/null)
         if [ -n "$session_display" ]; then
             export DISPLAY="$session_display"
             if xset q >/dev/null 2>&1; then
-                echo "Using session DISPLAY=$DISPLAY"
+                echo "✅ Using session DISPLAY=$DISPLAY"
                 return 0
             fi
         fi
     fi
 
-    echo "Warning: Could not detect working X11 display"
+    echo "⚠️  Warning: Could not detect working X11 display, using default"
     export DISPLAY="${DISPLAY:-:0}"
     return 1
 }
 
-# Function to check if running under Wayland
-is_wayland() {
-    [ -n "$WAYLAND_DISPLAY" ] || [ "$XDG_SESSION_TYPE" = "wayland" ]
+# Function to check hardware acceleration
+check_graphics_support() {
+    if command -v glxinfo >/dev/null 2>&1; then
+        local renderer=$(glxinfo 2>/dev/null | grep "OpenGL renderer" | head -1)
+        if [ -n "$renderer" ]; then
+            echo "🎮 Graphics: $renderer"
+            export AVALONIA_RENDER="opengl"
+        else
+            echo "🔧 Hardware acceleration not available, using software rendering"
+            export AVALONIA_RENDER="software"
+        fi
+    fi
 }
 
-# Main launcher logic
+# Main launcher function
 main() {
-    echo "🚀 Starting Legion Toolkit GUI..."
+    echo "🚀 Legion Toolkit GUI Launcher v3.0.0"
+    echo "======================================="
 
     # Check if binary exists
     if [ ! -x "/usr/bin/LegionToolkit" ]; then
@@ -517,29 +593,80 @@ main() {
         exit 1
     fi
 
-    # Handle Wayland sessions
-    if is_wayland; then
-        echo "🌊 Detected Wayland session"
-        # For Wayland, we might need XWayland
-        if command -v xwayland >/dev/null 2>&1; then
-            export GDK_BACKEND="wayland,x11"
-            export QT_QPA_PLATFORM="wayland;xcb"
+    # Configure display environment
+    setup_display_environment
+
+    # Check graphics acceleration support
+    check_graphics_support
+
+    # Verify critical dependencies
+    echo "🔍 Checking dependencies..."
+
+    # Check for SkiaSharp native library
+    local skiasharp_found=false
+    for lib_path in "/usr/lib/legion-toolkit" "/usr/lib/x86_64-linux-gnu" "/usr/lib"; do
+        if [ -f "$lib_path/libSkiaSharp.so" ] || [ -f "$lib_path/libskia.so" ]; then
+            echo "✅ SkiaSharp library found in $lib_path"
+            skiasharp_found=true
+            break
         fi
-    else
-        echo "🪟 Detected X11 session"
-        setup_display
+    done
+
+    if [ "$skiasharp_found" = "false" ]; then
+        echo "⚠️  Warning: SkiaSharp native library not found, using software rendering"
+        export AVALONIA_RENDER="software"
     fi
 
-    # Set additional environment variables for better GUI support
-    export QT_AUTO_SCREEN_SCALE_FACTOR=1
-    export QT_ENABLE_HIGHDPI_SCALING=1
+    # Check for key system libraries
+    local missing_libs=""
+    for lib in libgio-2.0.so.0 libglib-2.0.so.0 libgtk-3.so.0; do
+        if ! ldconfig -p | grep -q "$lib"; then
+            missing_libs="$missing_libs $lib"
+        fi
+    done
 
-    # For better font rendering
-    export QT_FONT_DPI=96
+    if [ -n "$missing_libs" ]; then
+        echo "⚠️  Warning: Missing system libraries:$missing_libs"
+        echo "   Install with: sudo apt install libgio-2.0-0 libglib2.0-0 libgtk-3-0"
+    fi
 
-    # Start the application
-    echo "🎯 Launching Legion Toolkit..."
-    exec /usr/bin/LegionToolkit "$@"
+    # Configure HiDPI support
+    if [ -n "$GDK_SCALE" ] || [ -n "$GDK_DPI_SCALE" ]; then
+        echo "🖥️  HiDPI scaling detected"
+        export QT_AUTO_SCREEN_SCALE_FACTOR=1
+        export QT_ENABLE_HIGHDPI_SCALING=1
+    fi
+
+    # Set font configuration
+    export FONTCONFIG_PATH=/etc/fonts
+    export QT_FONT_DPI=${QT_FONT_DPI:-96}
+
+    # GIO and D-Bus integration for proper desktop notifications
+    if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && command -v dbus-launch >/dev/null 2>&1; then
+        echo "🔧 Starting D-Bus session for desktop integration"
+        eval $(dbus-launch --sh-syntax)
+    fi
+
+    echo "✅ Environment configured successfully"
+    echo ""
+
+    # Launch the application with error handling
+    echo "🎯 Starting Legion Toolkit..."
+
+    # Capture startup errors
+    if ! /usr/bin/LegionToolkit "$@" 2>&1; then
+        local exit_code=$?
+        echo ""
+        echo "❌ Application failed to start (exit code: $exit_code)"
+        echo ""
+        echo "🛠️  Troubleshooting:"
+        echo "• Run diagnostics: legion-toolkit-debug"
+        echo "• Check dependencies: ldd /usr/bin/LegionToolkit"
+        echo "• View logs: journalctl --user -f | grep legion"
+        echo "• Manual launch: /usr/bin/LegionToolkit"
+        echo ""
+        exit $exit_code
+    fi
 }
 
 # Run main function
@@ -565,26 +692,245 @@ if [ ! -f "./publish/debian-package/${PACKAGE_NAME}/usr/share/icons/hicolor/256x
     echo "Creating fallback icon..."
 fi
 
-# Create diagnostic launcher script
+# Create comprehensive diagnostic launcher script
 cat > ./publish/debian-package/${PACKAGE_NAME}/usr/bin/legion-toolkit-debug << 'EOF'
 #!/bin/bash
-# Legion Toolkit Diagnostic Launcher
+# Legion Toolkit Enhanced Diagnostic Tool v3.0.0
 
-echo "🔍 Legion Toolkit Diagnostic Information"
-echo "========================================"
+echo "🔍 Legion Toolkit Comprehensive Diagnostic"
+echo "==========================================="
+echo "Date: $(date)"
+echo "User: $(whoami)"
+echo ""
 
-echo "📍 Binary Location:"
-ls -la /usr/bin/LegionToolkit 2>/dev/null || echo "❌ Binary not found at /usr/bin/LegionToolkit"
+# System Information
+echo "🖥️  System Information:"
+echo "OS: $(lsb_release -d 2>/dev/null | cut -f2 || cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"')"
+echo "Kernel: $(uname -r)"
+echo "Architecture: $(uname -m)"
+echo "Desktop: ${XDG_CURRENT_DESKTOP:-Unknown}"
+echo "Session: ${XDG_SESSION_TYPE:-Unknown}"
+echo ""
 
+# Binary and Installation Check
+echo "📍 Installation Status:"
+if [ -x "/usr/bin/LegionToolkit" ]; then
+    echo "✅ Main binary: /usr/bin/LegionToolkit"
+    ls -la /usr/bin/LegionToolkit
+else
+    echo "❌ Main binary not found at /usr/bin/LegionToolkit"
+fi
+
+if [ -x "/usr/bin/legion-toolkit-gui" ]; then
+    echo "✅ GUI launcher: /usr/bin/legion-toolkit-gui"
+else
+    echo "❌ GUI launcher not found"
+fi
+
+if [ -f "/usr/share/applications/legion-toolkit.desktop" ]; then
+    echo "✅ Desktop file: /usr/share/applications/legion-toolkit.desktop"
+else
+    echo "❌ Desktop file not found"
+fi
+echo ""
+
+# Critical Dependencies Check
+echo "🔧 Critical Dependencies:"
+
+# Check .NET dependencies
+echo "• .NET Runtime Dependencies:"
+missing_dotnet=""
+for lib in libc6 libicu70 libicu72 libicu74 libssl3 libssl1.1; do
+    if dpkg -l | grep -q "$lib" 2>/dev/null; then
+        echo "  ✅ $lib"
+    else
+        missing_dotnet="$missing_dotnet $lib"
+        echo "  ❌ $lib (missing)"
+    fi
+done
+
+# Check SkiaSharp dependencies
+echo "• SkiaSharp Dependencies:"
+skiasharp_found=false
+for lib_path in "/usr/lib/legion-toolkit" "/usr/lib/x86_64-linux-gnu" "/usr/lib" "/lib/x86_64-linux-gnu"; do
+    if [ -f "$lib_path/libSkiaSharp.so" ] || [ -f "$lib_path/libskia.so" ]; then
+        echo "  ✅ SkiaSharp library found: $lib_path"
+        skiasharp_found=true
+        break
+    fi
+done
+
+if [ "$skiasharp_found" = "false" ]; then
+    echo "  ❌ SkiaSharp native library not found"
+    echo "     This will cause GUI rendering issues!"
+fi
+
+# Check Graphics dependencies
+echo "• Graphics Dependencies:"
+for lib in libgl1-mesa-glx libgl1 libopengl0 libdrm2 libgbm1 libegl1-mesa; do
+    if ldconfig -p 2>/dev/null | grep -q "$lib"; then
+        echo "  ✅ $lib"
+    else
+        echo "  ❌ $lib (missing)"
+    fi
+done
+
+# Check GIO/GTK dependencies
+echo "• GIO/GTK Dependencies:"
+for lib in libgio-2.0-0 libglib2.0-0 libgtk-3-0 libgtk-4-1 libdbus-1-3; do
+    if dpkg -l 2>/dev/null | grep -q "$lib"; then
+        echo "  ✅ $lib"
+    else
+        echo "  ❌ $lib (missing)"
+    fi
+done
+echo ""
+
+# Display Environment Check
+echo "🖥️  Display Environment:"
+echo "DISPLAY: ${DISPLAY:-'Not set'}"
+echo "WAYLAND_DISPLAY: ${WAYLAND_DISPLAY:-'Not set'}"
+echo "XDG_SESSION_TYPE: ${XDG_SESSION_TYPE:-'Unknown'}"
+
+# Test X11 connectivity
+if [ -n "$DISPLAY" ]; then
+    if command -v xset >/dev/null 2>&1 && xset q >/dev/null 2>&1; then
+        echo "✅ X11 display accessible"
+    else
+        echo "❌ X11 display not accessible"
+    fi
+else
+    echo "⚠️  DISPLAY variable not set"
+fi
+
+# Check for Wayland
+if [ -n "$WAYLAND_DISPLAY" ]; then
+    echo "✅ Wayland session detected"
+else
+    echo "ℹ️  Not a Wayland session"
+fi
+echo ""
+
+# Library Path Check
+echo "📚 Library Paths:"
+echo "LD_LIBRARY_PATH: ${LD_LIBRARY_PATH:-'Not set'}"
+if [ -d "/usr/lib/legion-toolkit" ]; then
+    echo "✅ Legion Toolkit library directory exists"
+    ls -la /usr/lib/legion-toolkit/ 2>/dev/null | head -5
+else
+    echo "❌ Legion Toolkit library directory not found"
+fi
+echo ""
+
+# User Groups Check
+echo "👤 User Permissions:"
+if groups | grep -q legion; then
+    echo "✅ User is in 'legion' group"
+else
+    echo "❌ User not in 'legion' group"
+    echo "   Fix with: sudo usermod -a -G legion $USER"
+    echo "   Then log out and log back in"
+fi
+echo ""
+
+# Desktop File Validation
+echo "🖥️  Desktop Integration:"
+if command -v desktop-file-validate >/dev/null 2>&1; then
+    echo "• Desktop file validation:"
+    if desktop-file-validate /usr/share/applications/legion-toolkit.desktop 2>&1; then
+        echo "  ✅ Desktop file is valid"
+    else
+        echo "  ⚠️  Desktop file has validation issues (see above)"
+    fi
+else
+    echo "⚠️  desktop-file-validate not available"
+    echo "   Install with: sudo apt install desktop-file-utils"
+fi
+
+# Show desktop file content
+echo "• Desktop file content:"
+if [ -f "/usr/share/applications/legion-toolkit.desktop" ]; then
+    head -20 /usr/share/applications/legion-toolkit.desktop
+else
+    echo "  ❌ Desktop file not found"
+fi
+echo ""
+
+# JSON Serialization Check
+echo "🔧 .NET Configuration:"
+echo "• Checking for reflection issues..."
+if /usr/bin/LegionToolkit --version >/dev/null 2>&1; then
+    echo "  ✅ Application starts without JSON reflection errors"
+else
+    echo "  ❌ Application fails to start (may be JSON reflection issue)"
+fi
+echo ""
+
+# Hardware Detection
+echo "🔌 Hardware Detection:"
+if [ -f "/sys/class/dmi/id/product_name" ]; then
+    echo "Model: $(cat /sys/class/dmi/id/product_name 2>/dev/null || echo 'Unknown')"
+    echo "Version: $(cat /sys/class/dmi/id/product_version 2>/dev/null || echo 'Unknown')"
+else
+    echo "❌ Unable to detect hardware model"
+fi
+
+# Check for Legion kernel module
+if lsmod | grep -q legion; then
+    echo "✅ Legion kernel module loaded"
+    lsmod | grep legion
+else
+    echo "⚠️  Legion kernel module not loaded"
+    echo "   Load with: sudo modprobe legion-laptop"
+fi
+echo ""
+
+# Environment Variables for GUI
+echo "🌐 GUI Environment Variables:"
+relevant_vars="DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP GDK_BACKEND QT_QPA_PLATFORM AVALONIA_RENDER GIO_MODULE_DIR GSETTINGS_SCHEMA_DIR"
+for var in $relevant_vars; do
+    value=$(eval echo \$$var)
+    if [ -n "$value" ]; then
+        echo "$var=$value"
+    else
+        echo "$var=(not set)"
+    fi
+done
 echo ""
 echo "🔗 Dependencies Check:"
 if command -v ldd >/dev/null 2>&1; then
+    echo "📋 Checking binary dependencies:"
     MISSING=$(ldd /usr/bin/LegionToolkit 2>/dev/null | grep "not found")
     if [ -z "$MISSING" ]; then
         echo "✅ All dependencies satisfied"
     else
         echo "❌ Missing dependencies:"
         echo "$MISSING"
+    fi
+
+    # Check for SkiaSharp specifically
+    echo ""
+    echo "🎨 SkiaSharp Dependencies:"
+    if ldd /usr/bin/LegionToolkit 2>/dev/null | grep -q "libSkiaSharp"; then
+        echo "✅ SkiaSharp library referenced"
+    else
+        echo "⚠️  SkiaSharp library not found in dependencies"
+    fi
+
+    # Check native library paths
+    echo ""
+    echo "📚 Native Library Paths:"
+    echo "LD_LIBRARY_PATH: ${LD_LIBRARY_PATH:-'Not set'}"
+    if [ -d "/usr/lib/legion-toolkit" ]; then
+        echo "✅ Legion native library directory exists"
+        echo "   Contents: $(ls -la /usr/lib/legion-toolkit/ 2>/dev/null | wc -l) files"
+        if [ -f "/usr/lib/legion-toolkit/libSkiaSharp.so" ]; then
+            echo "✅ libSkiaSharp.so found"
+        else
+            echo "❌ libSkiaSharp.so missing"
+        fi
+    else
+        echo "❌ Legion native library directory missing"
     fi
 else
     echo "⚠️  ldd not available"
