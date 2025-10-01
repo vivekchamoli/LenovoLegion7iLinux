@@ -270,6 +270,34 @@ EOF
 }
 
 echo ""
+echo -e "${PURPLE}🔧 Building Kernel Module...${NC}"
+
+# Build kernel module if source exists
+if [ -d "../kernel-module" ]; then
+    echo -e "   ${CYAN}Found kernel module source${NC}"
+
+    # Check if build script exists
+    if [ -x "../kernel-module/build-kernel-module.sh" ]; then
+        echo -e "   ${BLUE}Building enhanced Legion kernel module...${NC}"
+        cd ../kernel-module
+
+        # Build module (but don't install yet - that happens via DKMS package)
+        if bash build-kernel-module.sh --test; then
+            echo -e "   ${GREEN}✅ Kernel module built successfully${NC}"
+        else
+            echo -e "   ${YELLOW}⚠️  Kernel module build failed (will still create DKMS package)${NC}"
+            echo -e "   ${YELLOW}   Users can build it after installing the DKMS package${NC}"
+        fi
+
+        cd -
+    else
+        echo -e "   ${YELLOW}⚠️  Build script not found, skipping kernel module build${NC}"
+    fi
+else
+    echo -e "   ${YELLOW}⚠️  Kernel module source not found at ../kernel-module${NC}"
+fi
+
+echo ""
 echo -e "${PURPLE}📁 Creating installation packages...${NC}"
 
 # Create Debian package structure
