@@ -79,6 +79,11 @@ dotnet publish \
     -p:PublishSingleFile=true \
     -p:PublishTrimmed=false \
     -p:IncludeNativeLibrariesForSelfExtract=true \
+    -p:IncludeAllContentForSelfExtract=true \
+    -p:CopyNativeLibrariesFromPackages=true \
+    -p:JsonSerializerIsReflectionEnabledByDefault=true \
+    -p:PublishAot=false \
+    -p:PublishReadyToRun=false \
     -p:DebugType=None \
     -p:DebugSymbols=false
 
@@ -93,6 +98,11 @@ dotnet publish \
     -p:PublishSingleFile=true \
     -p:PublishTrimmed=false \
     -p:IncludeNativeLibrariesForSelfExtract=true \
+    -p:IncludeAllContentForSelfExtract=true \
+    -p:CopyNativeLibrariesFromPackages=true \
+    -p:JsonSerializerIsReflectionEnabledByDefault=true \
+    -p:PublishAot=false \
+    -p:PublishReadyToRun=false \
     -p:DebugType=None \
     -p:DebugSymbols=false
 
@@ -315,6 +325,26 @@ if ! getent group legion > /dev/null 2>&1; then
     echo "Created 'legion' group"
 fi
 
+# Automatically add users to legion group during installation
+# This ensures immediate functionality without requiring manual user action
+if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
+    # Installation via sudo - add the actual user
+    usermod -a -G legion "$SUDO_USER"
+    echo "Added user '$SUDO_USER' to legion group"
+elif [ -n "$USER" ] && [ "$USER" != "root" ]; then
+    # Direct installation - add current user
+    usermod -a -G legion "$USER"
+    echo "Added user '$USER' to legion group"
+fi
+
+# Also try to add any users in common groups to legion group automatically
+for user in $(getent group sudo | cut -d: -f4 | tr ',' ' '); do
+    if [ -n "$user" ] && [ "$user" != "root" ] && ! groups "$user" 2>/dev/null | grep -q legion; then
+        usermod -a -G legion "$user" 2>/dev/null || true
+        echo "Added user '$user' to legion group"
+    fi
+done
+
 # Set up udev rules
 if [ -x "$(command -v udevadm)" ]; then
     udevadm control --reload-rules 2>/dev/null || true
@@ -459,19 +489,65 @@ chmod +x ./publish/debian-package/${PACKAGE_NAME}/usr/bin/LegionToolkit
 # Create lib directory for native libraries
 mkdir -p ./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/
 
-# Copy all native libraries from publish directory
+# Create comprehensive native library structure
+echo "📦 Setting up native library infrastructure..."
+
+# Create all necessary library directories
+mkdir -p ./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/runtimes/linux-x64/native
+mkdir -p ./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/linux-x64/native
+
+# Copy all native libraries from publish directory with comprehensive search
 if [ -d "./publish/linux-x64/runtimes" ]; then
-    echo "📦 Copying native runtime libraries..."
-    cp -r ./publish/linux-x64/runtimes/* ./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/ 2>/dev/null || true
+    echo "📦 Copying runtime native libraries..."
+    cp -r ./publish/linux-x64/runtimes/* ./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/runtimes/ 2>/dev/null || true
 fi
 
-# Copy any .so files from the publish directory
-find ./publish/linux-x64/ -name "*.so*" -exec cp {} ./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/ \; 2>/dev/null || true
+# Copy any .so files from the publish directory recursively
+echo "📦 Copying all shared libraries..."
+find ./publish/linux-x64/ -name "*.so*" -type f -exec cp {} ./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/ \; 2>/dev/null || true
 
-# Ensure libSkiaSharp.so is available
-if [ ! -f "./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/libSkiaSharp.so" ]; then
-    echo "⚠️  Warning: libSkiaSharp.so not found in build output"
-    echo "   This may cause GUI rendering issues"
+# Specifically look for SkiaSharp native assets in NuGet cache and copy them
+echo "🎨 Ensuring SkiaSharp native libraries..."
+if [ -d "$HOME/.nuget/packages/skiasharp.nativeassets.linux" ]; then
+    find "$HOME/.nuget/packages/skiasharp.nativeassets.linux" -name "libSkiaSharp.so" -exec cp {} ./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/ \; 2>/dev/null || true
+fi
+
+# Also check for HarfBuzz libraries
+if [ -d "$HOME/.nuget/packages/harfbuzzsharp.nativeassets.linux" ]; then
+    find "$HOME/.nuget/packages/harfbuzzsharp.nativeassets.linux" -name "libHarfBuzzSharp.so" -exec cp {} ./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/ \; 2>/dev/null || true
+fi
+
+# Create symlinks in standard locations for compatibility
+echo "🔗 Creating native library symlinks..."
+cd ./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/
+for lib in *.so*; do
+    if [ -f "$lib" ]; then
+        ln -sf "../${PACKAGE_NAME}/$lib" "../../x86_64-linux-gnu/$lib" 2>/dev/null || true
+        # Copy to linux-x64/native for .NET runtime discovery
+        cp "$lib" "./linux-x64/native/" 2>/dev/null || true
+    fi
+done
+cd ../../../../../..
+
+# Validate critical libraries
+echo "🔍 Validating critical native libraries..."
+critical_libs=("libSkiaSharp.so" "libHarfBuzzSharp.so")
+missing_libs=""
+
+for lib in "${critical_libs[@]}"; do
+    if [ ! -f "./publish/debian-package/${PACKAGE_NAME}/usr/lib/${PACKAGE_NAME}/$lib" ]; then
+        missing_libs="$missing_libs $lib"
+    else
+        echo "✅ Found: $lib"
+    fi
+done
+
+if [ -n "$missing_libs" ]; then
+    echo "⚠️  Warning: Missing critical native libraries:$missing_libs"
+    echo "   GUI rendering may not work properly"
+    echo "   Consider running: dotnet nuget locals all --clear && dotnet restore"
+else
+    echo "✅ All critical native libraries present"
 fi
 
 # Create symbolic link for command line access
@@ -486,8 +562,13 @@ cat > ./publish/debian-package/${PACKAGE_NAME}/usr/bin/legion-toolkit-gui << 'EO
 # Enhanced GIO-based desktop integration with comprehensive graphics support
 
 # Set library paths for SkiaSharp and native dependencies
-export LD_LIBRARY_PATH="/usr/lib/legion-toolkit:/usr/lib/legion-toolkit/linux-x64/native:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
-export SKIASHARP_LIBRARY_PATH="/usr/lib/legion-toolkit:/usr/lib/x86_64-linux-gnu"
+export LD_LIBRARY_PATH="/usr/lib/legion-toolkit:/usr/lib/legion-toolkit/linux-x64/native:/usr/lib/legion-toolkit/runtimes/linux-x64/native:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+export SKIASHARP_LIBRARY_PATH="/usr/lib/legion-toolkit:/usr/lib/legion-toolkit/linux-x64/native:/usr/lib/x86_64-linux-gnu"
+export HARFBUZZSHARP_LIBRARY_PATH="/usr/lib/legion-toolkit:/usr/lib/legion-toolkit/linux-x64/native"
+
+# Force .NET to look in our library directories
+export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+export DOTNET_SYSTEM_NET_HTTP_USESOCKETSHTTPHANDLER=0
 
 # GIO-based desktop integration
 export GIO_MODULE_DIR="/usr/lib/x86_64-linux-gnu/gio/modules"
@@ -604,7 +685,15 @@ main() {
 
     # Check for SkiaSharp native library
     local skiasharp_found=false
-    for lib_path in "/usr/lib/legion-toolkit" "/usr/lib/x86_64-linux-gnu" "/usr/lib"; do
+    search_paths=(
+        "/usr/lib/legion-toolkit"
+        "/usr/lib/legion-toolkit/linux-x64/native"
+        "/usr/lib/legion-toolkit/runtimes/linux-x64/native"
+        "/usr/lib/x86_64-linux-gnu"
+        "/usr/lib"
+    )
+
+    for lib_path in "${search_paths[@]}"; do
         if [ -f "$lib_path/libSkiaSharp.so" ] || [ -f "$lib_path/libskia.so" ]; then
             echo "✅ SkiaSharp library found in $lib_path"
             skiasharp_found=true
@@ -752,9 +841,18 @@ done
 # Check SkiaSharp dependencies
 echo "• SkiaSharp Dependencies:"
 skiasharp_found=false
-for lib_path in "/usr/lib/legion-toolkit" "/usr/lib/x86_64-linux-gnu" "/usr/lib" "/lib/x86_64-linux-gnu"; do
+skiasharp_search_paths=(
+    "/usr/lib/legion-toolkit"
+    "/usr/lib/legion-toolkit/linux-x64/native"
+    "/usr/lib/legion-toolkit/runtimes/linux-x64/native"
+    "/usr/lib/x86_64-linux-gnu"
+    "/usr/lib"
+    "/lib/x86_64-linux-gnu"
+)
+
+for lib_path in "${skiasharp_search_paths[@]}"; do
     if [ -f "$lib_path/libSkiaSharp.so" ] || [ -f "$lib_path/libskia.so" ]; then
-        echo "  ✅ SkiaSharp library found: $lib_path"
+        echo "  ✅ SkiaSharp library found: $lib_path/libSkiaSharp.so"
         skiasharp_found=true
         break
     fi

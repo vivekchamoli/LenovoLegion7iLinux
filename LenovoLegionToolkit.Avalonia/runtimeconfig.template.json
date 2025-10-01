@@ -1,0 +1,11 @@
+{
+  "configProperties": {
+    "System.Text.Json.JsonSerializer.IsReflectionEnabledByDefault": true,
+    "System.Reflection.NullabilityInfoContext.IsSupported": true,
+    "System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization": true,
+    "Microsoft.Extensions.DependencyInjection.VerifyOpenGenericServiceTrimmability": false,
+    "System.StartupHookProvider.IsSupported": false,
+    "System.Text.Encoding.EnableUnsafeUTF7Encoding": false,
+    "System.Globalization.Invariant": false
+  }
+}

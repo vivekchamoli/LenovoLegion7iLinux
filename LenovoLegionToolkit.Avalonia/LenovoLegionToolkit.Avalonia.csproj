@@ -59,6 +59,10 @@
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.10" />
     <PackageReference Include="Avalonia.ReactiveUI" Version="11.0.10" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.0.10" />
+    <PackageReference Include="SkiaSharp" Version="2.88.8" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.8" />
+    <PackageReference Include="HarfBuzzSharp" Version="7.3.0.2" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" Version="7.3.0.2" />
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
@@ -96,6 +100,27 @@
     <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
     <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
     <InvariantGlobalization>false</InvariantGlobalization>
+    <!-- Force native library inclusion -->
+    <CopyNativeLibrariesFromPackages>true</CopyNativeLibrariesFromPackages>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <!-- Disable AOT and trimming completely for reflection support -->
+    <PublishAot>false</PublishAot>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <TieredCompilation>true</TieredCompilation>
+    <TieredPGO>false</TieredPGO>
   </PropertyGroup>
+
+  <!-- Native library references for explicit inclusion -->
+  <ItemGroup>
+    <Content Include="runtimeconfig.template.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <!-- Force include native assets for Linux -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+    <NativeLibrary Include="$(NuGetPackageRoot)skiasharp.nativeassets.linux\2.88.8\runtimes\linux-x64\native\*" />
+    <NativeLibrary Include="$(NuGetPackageRoot)harfbuzzsharp.nativeassets.linux\7.3.0.2\runtimes\linux-x64\native\*" />
+  </ItemGroup>
 
 </Project>
