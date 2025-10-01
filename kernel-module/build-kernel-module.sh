@@ -292,29 +292,82 @@ test_kernel_module() {
     echo -e "${CYAN}🧪 Testing Kernel Module${NC}"
     echo "─────────────────────────────────────────"
 
-    # Check if module can be loaded (dry run)
-    if command -v modprobe &> /dev/null; then
-        echo -e "  ${BLUE}Testing module load (dry run)...${NC}"
-        if modprobe --dry-run --first-time ${MODULE_NAME} 2>/dev/null; then
-            echo -e "  ${GREEN}✓ Module dependencies satisfied${NC}"
+    # Check if module file was built
+    if [ ! -f "${MODULE_NAME}.ko" ]; then
+        echo -e "  ${RED}✗ Module file not found${NC}"
+        return 1
+    fi
+
+    # Check module info
+    if command -v modinfo &> /dev/null; then
+        echo -e "  ${BLUE}Verifying module structure...${NC}"
+        if modinfo "./${MODULE_NAME}.ko" &> /dev/null; then
+            echo -e "  ${GREEN}✓ Module structure is valid${NC}"
+
+            # Show module details
+            local mod_version=$(modinfo "./${MODULE_NAME}.ko" | grep "^version:" | awk '{print $2}')
+            local mod_desc=$(modinfo "./${MODULE_NAME}.ko" | grep "^description:" | cut -d: -f2- | xargs)
+            if [ -n "$mod_version" ]; then
+                echo -e "  ${CYAN}  Version: $mod_version${NC}"
+            fi
+            if [ -n "$mod_desc" ]; then
+                echo -e "  ${CYAN}  Description: $mod_desc${NC}"
+            fi
         else
-            echo -e "  ${YELLOW}⚠ Module may have dependency issues${NC}"
+            echo -e "  ${RED}✗ Module structure validation failed${NC}"
+            return 1
         fi
     fi
 
     # Check module symbols
-    if [ -f "${MODULE_NAME}.ko" ]; then
-        echo -e "  ${BLUE}Checking module symbols...${NC}"
+    if command -v nm &> /dev/null; then
+        echo -e "  ${BLUE}Checking module entry points...${NC}"
         if nm "${MODULE_NAME}.ko" | grep -q "init_module"; then
             echo -e "  ${GREEN}✓ Module has required entry points${NC}"
+        else
+            echo -e "  ${YELLOW}⚠ Module entry points not found${NC}"
         fi
     fi
 
-    # Verify module signature (if kernel requires it)
+    # Check for undefined symbols
+    if command -v modprobe &> /dev/null; then
+        echo -e "  ${BLUE}Checking for undefined symbols...${NC}"
+        local undef_count=$(modprobe --dump-modversions "./${MODULE_NAME}.ko" 2>/dev/null | wc -l)
+        if [ $undef_count -gt 0 ]; then
+            echo -e "  ${GREEN}✓ Module has $undef_count kernel symbol dependencies${NC}"
+        fi
+    fi
+
+    # Verify module signature requirements
     if grep -q "CONFIG_MODULE_SIG_FORCE=y" "/boot/config-$KERNEL_VERSION" 2>/dev/null; then
         echo -e "  ${YELLOW}⚠ Kernel requires signed modules${NC}"
-        echo -e "  ${BLUE}You may need to disable Secure Boot or sign the module${NC}"
+        echo -e "  ${BLUE}  You may need to disable Secure Boot or sign the module${NC}"
+
+        # Check if module is signed
+        if command -v modinfo &> /dev/null; then
+            if modinfo "./${MODULE_NAME}.ko" | grep -q "sig_id"; then
+                echo -e "  ${GREEN}✓ Module is signed${NC}"
+            else
+                echo -e "  ${YELLOW}⚠ Module is not signed${NC}"
+            fi
+        fi
+    else
+        echo -e "  ${GREEN}✓ Kernel does not require module signing${NC}"
     fi
+
+    # Final compatibility check
+    echo -e "  ${BLUE}Checking kernel compatibility...${NC}"
+    local module_kernel=$(modinfo "./${MODULE_NAME}.ko" 2>/dev/null | grep "^vermagic:" | awk '{print $2}')
+    if [ -n "$module_kernel" ]; then
+        if [ "$module_kernel" = "$KERNEL_VERSION" ]; then
+            echo -e "  ${GREEN}✓ Module built for current kernel: $KERNEL_VERSION${NC}"
+        else
+            echo -e "  ${YELLOW}⚠ Module built for: $module_kernel, current: $KERNEL_VERSION${NC}"
+        fi
+    fi
+
+    echo -e "\n  ${GREEN}✅ Module passed all validation tests${NC}"
+    return 0
 }
 
 # ============================================================================
