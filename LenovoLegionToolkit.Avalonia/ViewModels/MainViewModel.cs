@@ -132,7 +132,7 @@ namespace LenovoLegionToolkit.Avalonia.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warning("Failed to load settings", ex);
+                    Logger.Error("Failed to load settings", ex);
                     // Continue anyway
                 }
 
@@ -146,7 +146,7 @@ namespace LenovoLegionToolkit.Avalonia.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warning("Failed to get hardware info", ex);
+                    Logger.Error("Failed to get hardware info", ex);
                     WindowTitle = "Legion Toolkit for Linux";
                 }
 
@@ -160,7 +160,7 @@ namespace LenovoLegionToolkit.Avalonia.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warning("Failed to detect capabilities", ex);
+                    Logger.Error("Failed to detect capabilities", ex);
                     // Continue with default navigation
                 }
 
@@ -172,7 +172,7 @@ namespace LenovoLegionToolkit.Avalonia.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warning("Failed to apply settings", ex);
+                    Logger.Error("Failed to apply settings", ex);
                 }
 
                 _isInitialized = true;
