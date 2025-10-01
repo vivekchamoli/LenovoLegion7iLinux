@@ -924,9 +924,15 @@ static int __init legion_laptop_init(void)
         }
 
         if (ACPI_SUCCESS(status)) {
-            /* Get device from handle */
+            /* Get device from handle - kernel 6.8+ uses acpi_fetch_acpi_dev */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,8,0)
+            adev = acpi_fetch_acpi_dev(handle);
+#else
             status = acpi_bus_get_device(handle, &adev);
-            if (ACPI_SUCCESS(status) && adev) {
+            if (ACPI_FAILURE(status))
+                adev = NULL;
+#endif
+            if (adev) {
                 ACPI_COMPANION_SET(&legion_laptop_device->dev, adev);
                 legion_dbg("Found ACPI EC device\n");
             }
