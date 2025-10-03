@@ -31,7 +31,7 @@ namespace LenovoLegionToolkit.Avalonia.Models
         public int BitDepth { get; set; }
         public bool HdrEnabled { get; set; }
         public int Brightness { get; set; }
-        public ColorProfile ColorProfile { get; set; }
+        public ColorProfile ColorProfile { get; set; } = new();
         public DisplayOrientation Orientation { get; set; }
         public int PositionX { get; set; }
         public int PositionY { get; set; }

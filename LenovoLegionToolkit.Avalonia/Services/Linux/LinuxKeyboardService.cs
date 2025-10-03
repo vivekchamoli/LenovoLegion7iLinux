@@ -33,34 +33,34 @@ namespace LenovoLegionToolkit.Avalonia.Services.Linux
 
         public event EventHandler<RgbKeyboardState>? KeyboardStateChanged;
 
-        public async Task<bool> IsRgbSupportedAsync()
+        public Task<bool> IsRgbSupportedAsync()
         {
             try
             {
                 // Check for basic keyboard backlight support
                 if (!File.Exists(RGB_BRIGHTNESS_PATH))
-                    return false;
+                    return Task.FromResult(false);
 
                 // Check for Legion RGB support
                 if (Directory.Exists(RGB_LEGION_PATH))
                 {
                     Logger.Info("Legion RGB keyboard detected");
-                    return true;
+                    return Task.FromResult(true);
                 }
 
                 // Check for standard RGB support
                 if (File.Exists(RGB_BASE_PATH + "color"))
                 {
                     Logger.Info("Standard RGB keyboard detected");
-                    return true;
+                    return Task.FromResult(true);
                 }
 
-                return false;
+                return Task.FromResult(false);
             }
             catch (Exception ex)
             {
                 Logger.Error("Failed to check RGB support", ex);
-                return false;
+                return Task.FromResult(false);
             }
         }
 

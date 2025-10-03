@@ -21,7 +21,6 @@ namespace LenovoLegionToolkit.Avalonia.Services.Linux
         private const string NVIDIA_PROC_PATH = "/proc/driver/nvidia/gpus";
 
         private readonly Subject<GpuInfo> _gpuStateChanged = new();
-        private FileSystemWatcher? _watcher;
 
         public IObservable<GpuInfo> GpuStateChanged => _gpuStateChanged;
 

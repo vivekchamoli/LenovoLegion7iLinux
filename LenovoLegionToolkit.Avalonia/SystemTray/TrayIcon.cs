@@ -14,7 +14,6 @@ namespace LenovoLegionToolkit.Avalonia.SystemTray
 {
     public class SystemTrayIcon : IDisposable
     {
-        private NativeMenuItem? _trayMenu;
         private global::Avalonia.Controls.TrayIcon? _icon;
         private readonly MainViewModel _mainViewModel;
         private readonly Window _mainWindow;

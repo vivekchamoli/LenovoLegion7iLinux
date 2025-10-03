@@ -333,6 +333,7 @@ static int legion_call_acpi_method(struct acpi_device *adev, const char *method,
         *result = (int)obj->integer.value;
     }
 
+    /* Always free allocated buffer before returning */
     kfree(output.pointer);
 
     return ret;
@@ -816,21 +817,25 @@ static int legion_laptop_probe(struct platform_device *pdev)
     platform_set_drvdata(pdev, legion);
     dev_set_drvdata(&pdev->dev, legion);
 
-    /* Create sysfs attributes */
+    /* Store global reference BEFORE creating sysfs to prevent race condition */
+    /* Use smp_store_release to ensure all initialization is visible before assignment */
+    smp_store_release(&legion_device, legion);
+
+    /* Create sysfs attributes - now safe as global device is set */
     ret = sysfs_create_group(&pdev->dev.kobj, &legion_laptop_group);
     if (ret) {
         legion_err("Failed to create sysfs group: %d\n", ret);
-        goto err_destroy_mutex;
+        goto err_clear_global;
     }
 
     /* Initialize current states */
     legion_get_thermal_mode(legion);
 
-    /* Store global reference - no mutex needed here as probe is serialized */
-    legion_device = legion;
-
     legion_info("Legion Enhanced driver loaded successfully\n");
     return 0;
+
+err_clear_global:
+    smp_store_release(&legion_device, NULL);
 
 err_destroy_mutex:
     mutex_destroy(&legion->lock);
@@ -845,7 +850,8 @@ static int legion_laptop_remove(struct platform_device *pdev)
     legion_info("Removing Legion Enhanced driver\n");
 
     /* Clear global reference first to prevent new accesses */
-    legion_device = NULL;
+    /* Use smp_store_release for memory barrier */
+    smp_store_release(&legion_device, NULL);
 
     /* Remove sysfs attributes - this blocks until all sysfs operations complete */
     sysfs_remove_group(&pdev->dev.kobj, &legion_laptop_group);
@@ -858,13 +864,17 @@ static int legion_laptop_remove(struct platform_device *pdev)
     return 0;
 }
 
-/* ACPI device IDs */
+/* ACPI device IDs - kept for reference but not used for auto-loading */
+/* Module loads via platform device created in init based on DMI detection */
 static const struct acpi_device_id legion_laptop_acpi_ids[] = {
-    {"PNP0C09", 0}, /* Standard Embedded Controller */
-    {"VPC2004", 0}, /* Legion WMI interface */
-    {"", 0},
+    {"PNP0C09", 0}, /* Standard Embedded Controller - for ACPI companion */
+    {"VPC2004", 0}, /* Legion WMI interface - legacy reference */
+    {},
 };
 MODULE_DEVICE_TABLE(acpi, legion_laptop_acpi_ids);
+
+/* DMI-based module auto-loading */
+MODULE_DEVICE_TABLE(dmi, legion_laptop_ids);
 
 /* Platform driver */
 static struct platform_driver legion_laptop_driver = {
@@ -872,7 +882,8 @@ static struct platform_driver legion_laptop_driver = {
     .remove = legion_laptop_remove,
     .driver = {
         .name = LEGION_DRIVER_NAME,
-        .acpi_match_table = legion_laptop_acpi_ids,
+        /* Don't use acpi_match_table - we create platform device manually */
+        .acpi_match_table = ACPI_PTR(NULL),
     },
 };
 

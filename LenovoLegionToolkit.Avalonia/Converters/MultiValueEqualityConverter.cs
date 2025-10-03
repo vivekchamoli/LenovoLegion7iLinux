@@ -10,7 +10,7 @@ namespace LenovoLegionToolkit.Avalonia.Converters
     {
         public static readonly MultiValueEqualityConverter Instance = new();
 
-        public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+        public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
         {
             if (values == null || values.Count < 2)
                 return false;
@@ -24,7 +24,7 @@ namespace LenovoLegionToolkit.Avalonia.Converters
             if (first == null || second == null)
                 return null;
 
-            return first.Equals(second) ? "Active" : null;
+            return first.Equals(second) ? "Active" : (object?)null;
         }
 
         public object[] ConvertBack(object? value, Type[] targetTypes, object? parameter, CultureInfo culture)
